@@ -1,0 +1,52 @@
+order,group_id,type_vi,pattern
+1,5,Nước rửa móng,nail polish remover|polish remover|acetone
+2,5,Sơn móng,nail polish|nail lacquer|lacquer|gel polish|soak off|gelish|shellac|top coat|top nail coat|base coat|\bopi\b|essie|seche vite|china glaze|sally hansen|\borly\b|\bzoya\b|nail envy|stamping polish
+3,5,Phụ kiện làm móng,nail|manicure|pedicure|cuticle|rhinestone|dotting|nailart|acrylic tips|false tips|\bkonad\b|\bmoyou\b
+4,10,Dao cạo,razor|blades?\b|schick|gillette|\bvenus\b|\bbic\b
+5,10,Kem cạo râu,shave|shaving|after ?shave|beard|mustache
+6,10,Tẩy lông,epilator|hair remov|\bwax|depilat|threading|trimmer|nair\b|veet
+7,8,Khử mùi,deodorant|antiperspirant
+8,8,Nước hoa,perfume|parfum|eau de|cologne|fragrance|body mist|body spray|perfume oil
+9,7,Thiết bị tạo kiểu tóc,hair dryer|blow dryer|\bdryer\b|straightener|flat iron|curling|curler|hot air brush|hot brush|styler|crimper|hot rollers|diffuser
+10,7,Phụ kiện tóc,hair brush|hairbrush|paddle brush|detangl|\bcomb\b|hair clip|\bclips?\b|headband|head band|hair band|barrette|\bbun\b|hair tie|scrunchie|\bwig\b|hair extension|denman|wet brush|bobby pin|hair pin|hair accessor|braid
+11,6,Mi giả,eyelash applicator|eyelash extension|extension eyelash|false eyelash|fake eye ?lash|eyelashes|lash adhesive|eyelash glue|strip lashes
+12,6,Cọ trang điểm,brush set|brushes|\bbrush\b|kabuki
+13,6,Mút trang điểm,sponge|blender|\bpuff\b
+13.5,6,Cọ trang điểm,real techniques|core collection
+14,6,Dụng cụ làm đẹp,applicator|tweezer|mirror|eyelash curler|derma ?roller|micro ?needle|cleansing system|facial tool|skin care tool|\btool\b|sharpener|organizer|cosmetic bag|makeup bag|makeup case|train case
+15,1,Tẩy trang,makeup remover|make-up remover|micellar|remover wipes|cleansing oil
+16,4,Mascara,mascara
+17,4,Kẻ mắt,eyeliner|eye liner|eye pencil|kohl
+18,4,Phấn mắt,eyeshadow|eye shadow|shadow palette|eye primer|eyelid primer|shadow insurance|shadow base
+19,4,Trang điểm mày,eyebrow|\bbrow
+20,4,Dưỡng mi,lash serum|lash growth|eyelash enhanc|lash enhanc|rapidlash|lash conditioner
+21,4,Son môi,lipstick|lip gloss|lipgloss|lip color|lipcolor|lip liner|lip stain|lip tint|lip crayon|lip pencil|lip lacquer
+22,4,Kem nền,foundation|bb cream|cc cream|tinted moisturizer
+23,4,Che khuyết điểm,concealer|corrector
+24,4,Phấn phủ,face powder|loose powder|pressed powder|setting powder|\bpowder\b
+25,4,Má hồng & tạo khối,blush|bronzer|highlighter|contour|illuminator
+26,4,Kem lót,primer
+27,4,Trang điểm,makeup|make-up|cosmetics palette|palette|setting spray
+28,2,Kem nhuộm da,self tan|self-tan|tanning|bronzing lotion|fake bake|sunless
+29,2,Kem chống nắng,sunscreen|sun screen|sunblock|sun block|\bspf\b|uv clear|after sun|sun care
+30,3,Nhuộm tóc,hair colou?r|hair dye|haircolor|\bdye\b|root touch|henna
+31,3,Dầu gội,dry shampoo|shampoo
+32,3,Dầu xả,conditioner|co-?wash|cowash
+33,3,Dưỡng tóc,\bhair\b|scalp|dandruff|keratin|leave-in|leave in|frizz|curl|hair mask|hairspray|pomade|styling|mousse|moroccanoil|moroccan oil
+34,9,Sữa tắm,body wash|shower gel|shower|bubble bath|bath
+35,9,Xà phòng,\bsoap\b|bar soap|beauty bar|body bar|cleansing bar
+36,9,Kem dưỡng tay & chân,hand cream|hand lotion|working hands|foot cream|\bfoot\b|\bfeet\b|heel
+37,9,Tẩy tế bào chết cơ thể,body scrub|sugar scrub|salt scrub
+38,9,Dưỡng thể,body lotion|body butter|body cream|body oil|cellulite|stretch mark|shea butter|cocoa butter|body
+39,1,Son dưỡng môi,lip balm|chapstick|lip care|lip treatment
+40,1,Sữa rửa mặt,face wash|facial cleanser|cleanser|cleansing|foaming wash|\bwash\b
+41,1,Nước hoa hồng,toner|witch hazel|rose water|astringent|facial mist
+42,1,Mặt nạ,\bmask|masque|\bclay\b|\bmud\b|peel-off|sheet mask
+43,1,Tẩy tế bào chết,exfoli|\bscrub|\bpeel\b|microdermabrasion|glycolic|\baha\b|\bbha\b|salicylic
+44,1,Trị mụn,acne|blemish|pimple|pore strip|blackhead|spot treatment|tea tree
+45,1,Serum,serum|essence|ampoule|hyaluronic|vitamin c
+46,1,Kem mắt,eye cream|eye gel|under eye|eye serum|\beye\b
+47,1,Chống lão hóa,wrinkle|anti-aging|anti aging|retinol|collagen|firming|regenerist
+48,1,Dưỡng ẩm,moisturi|cream|lotion|gel-cream|hydrat|night|day cream
+49,1,Dầu dưỡng,\boil\b|argan|rosehip|jojoba|glycerin|aloe
+50,1,Khăn ướt,wipes|towelettes

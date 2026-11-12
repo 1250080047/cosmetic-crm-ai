@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360" role="img" aria-labelledby="title desc">
+<title id="title">Chưa có ảnh sản phẩm</title><desc id="desc">Biểu tượng chai mỹ phẩm trên nền kem; hình ảnh sản phẩm đang được bổ sung.</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#f8f7f0"/><stop offset="1" stop-color="#e9eddf"/></linearGradient></defs>
+<path fill="url(#bg)" d="M0 0h480v360H0z"/><circle cx="240" cy="160" r="83" fill="#dde5d3" fill-opacity=".5"/>
+<g fill="none" stroke="#72876d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<rect x="213" y="128" width="54" height="88" rx="12"/><path d="M229 128v-19h22v19m-22 17h22m-22 48h22m-34 44h46"/>
+<path d="M240 163c-17-11-18 8 0 13 18-5 17-24 0-13Z"/>
+</g><text x="240" y="282" text-anchor="middle" fill="#53694e" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="500">Đang bổ sung hình ảnh</text>
+<text x="240" y="307" text-anchor="middle" fill="#7c8c74" font-family="Segoe UI,Arial,sans-serif" font-size="12">Sản phẩm vẫn sẵn sàng để chọn mua</text></svg>

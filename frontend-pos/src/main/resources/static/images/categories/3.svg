@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360" role="img" aria-labelledby="title desc">
+<title id="title">Chăm sóc tóc</title><desc id="desc">Chai dầu gội xanh đậm với vòi bơm và tuýp dầu xả màu ngà. Hình minh họa nhóm hàng, không mô tả bao bì của sản phẩm cụ thể.</desc>
+<defs>
+  <linearGradient id="back" x2=".8" y2="1"><stop stop-color="#f6f5ef"/><stop offset="1" stop-color="#e4eadc"/></linearGradient>
+  <linearGradient id="arch" x2="1" y2="1"><stop stop-color="#d6dfcd" stop-opacity=".7"/><stop offset="1" stop-color="#f6f5ef" stop-opacity=".2"/></linearGradient>
+  <linearGradient id="sage"><stop stop-color="#718c75"/><stop offset=".24" stop-color="#a6b59a"/><stop offset=".58" stop-color="#8fa585"/><stop offset="1" stop-color="#566e58"/></linearGradient>
+  <linearGradient id="dark"><stop stop-color="#304c3e"/><stop offset=".35" stop-color="#607c65"/><stop offset="1" stop-color="#2f4b3c"/></linearGradient>
+  <linearGradient id="ivory"><stop stop-color="#ded9c8"/><stop offset=".28" stop-color="#fffdf4"/><stop offset=".7" stop-color="#efebdd"/><stop offset="1" stop-color="#d4d0bc"/></linearGradient>
+  <linearGradient id="rose"><stop stop-color="#b47c73"/><stop offset=".3" stop-color="#dfb1a1"/><stop offset=".7" stop-color="#cb998c"/><stop offset="1" stop-color="#a66d66"/></linearGradient>
+  <linearGradient id="gold"><stop stop-color="#a88e5c"/><stop offset=".32" stop-color="#e4d2a7"/><stop offset=".6" stop-color="#cfb57d"/><stop offset="1" stop-color="#a48b5a"/></linearGradient>
+  <linearGradient id="amber"><stop stop-color="#9f713b" stop-opacity=".85"/><stop offset=".35" stop-color="#dfba79" stop-opacity=".7"/><stop offset="1" stop-color="#b1864e" stop-opacity=".9"/></linearGradient>
+  <linearGradient id="silver"><stop stop-color="#b6beb3"/><stop offset=".3" stop-color="#f2f3e9"/><stop offset=".7" stop-color="#d8ddd1"/><stop offset="1" stop-color="#9ba79c"/></linearGradient>
+  <linearGradient id="glass"><stop stop-color="#fff" stop-opacity=".65"/><stop offset=".45" stop-color="#f6f4e5" stop-opacity=".15"/><stop offset="1" stop-color="#a0ad95" stop-opacity=".6"/></linearGradient>
+  <radialGradient id="halo"><stop stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <filter id="blur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="5"/></filter>
+</defs>
+<path fill="url(#back)" d="M0 0h480v360H0z"/>
+<ellipse cx="151" cy="95" rx="210" ry="190" fill="url(#halo)" />
+<path d="M132 280V154a108 108 0 0 1 216 0v126Z" fill="url(#arch)"/>
+<path d="M0 292q240-14 480 0v68H0Z" fill="#f6f5ef" fill-opacity=".6"/>
+<g fill="none" stroke="#7c8b71" stroke-width="1.2" opacity=".3" stroke-linecap="round">
+  <path d="M380 290q-4-71 29-132"/>
+  <path d="M386 256q-30-7-29-31 24 5 29 31Zm5-28q23-7 28-28-26 2-28 28Zm6-28q-19-12-15-29 19 8 15 29Zm9-27q20-4 22-24-18 4-22 24Z"/>
+</g>
+<ellipse cx="238" cy="316" rx="150" ry="7" fill="#455343" opacity=".15" filter="url(#blur)"/>
+<path d="M91 289h298v20c0 13-67 24-149 24S91 322 91 309Z" fill="#d8d7c7"/>
+<ellipse cx="240" cy="289" rx="149" ry="22" fill="#f4f1e6" /><ellipse cx="240" cy="288" rx="149" ry="21" fill="#fff" opacity=".25"/>
+<ellipse cx="200" cy="298" rx="64" ry="7" fill="#455343" opacity=".15" filter="url(#blur)"/><g>
+  <rect x="190.36" y="83" width="17.28" height="27" rx="3" fill="url(#gold)" /><rect x="176.92000000000002" y="70" width="44.160000000000004" height="17" rx="4" fill="#3f5948" />
+  <path d="M199 75H256V86H245" fill="none" stroke="#3f5948" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M179.8 108H218.2Q247 115 247 140V279Q247 295 231 295H167Q151 295 151 279V140Q151 115 179.8 108Z" fill="url(#dark)" stroke="#62725d" stroke-opacity=".15"/>
+  <rect x="161" y="138" width="5" height="137" rx="2.5" fill="#fff" opacity=".2"/><rect x="168.28" y="175.75" width="61.44" height="76.5" rx="2" fill="#f9f7ef" fill-opacity=".94"/>
+  <path d="M199 185.75c-10-7-15-2-11 4 3 4 9 4 11 9 0-7 12-7 11-15-6 0-10 3-11 9" fill="none" stroke="#657c69" stroke-width="1.2" stroke-linecap="round"/>
+  <rect x="183.0256" y="234.25" width="31.9488" height="1.5" rx="0.75" fill="#657c69" opacity=".65"/><rect x="189.1696" y="240.25" width="19.6608" height="1" rx="0.5" fill="#657c69" opacity=".35"/>
+</g><ellipse cx="297" cy="303" rx="48" ry="7" fill="#455343" opacity=".15" filter="url(#blur)"/><g>
+  <path d="M265 151H340L332 271Q331 280 325 280H280Q274 280 273 271Z" fill="url(#ivory)" stroke="#8b8d72" stroke-opacity=".22"/>
+  <path d="M269 158L336 158" stroke="#9b9d84" stroke-width="1" opacity=".3"/><rect x="275" y="166" width="4" height="95" rx="2" fill="#fff" opacity=".32"/>
+  <rect x="280" y="193" width="45" height="54" rx="2" fill="#f9f7ef" fill-opacity=".94"/>
+  <path d="M302.5 203c-10-7-15-2-11 4 3 4 9 4 11 9 0-7 12-7 11-15-6 0-10 3-11 9" fill="none" stroke="#657c69" stroke-width="1.2" stroke-linecap="round"/>
+  <rect x="290.8" y="229" width="23.400000000000002" height="1.5" rx="0.75" fill="#657c69" opacity=".65"/><rect x="295.3" y="235" width="14.4" height="1" rx="0.5" fill="#657c69" opacity=".35"/><rect x="276" y="277" width="53" height="24" rx="5" fill="url(#sage)" /><path d="M280 284L325 284" stroke="#fff" stroke-width="1" opacity=".16"/>
+</g>
+</svg>

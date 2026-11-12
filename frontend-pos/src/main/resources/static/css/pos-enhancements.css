@@ -1,0 +1,124 @@
+/* POS behavior additions: actual product images, separate free gifts and clear receipt lines. */
+.product-card { cursor: pointer; outline: none; height: auto; min-height: 350px; }
+.product-grid { grid-auto-rows: minmax(350px, max-content); }
+.product-card:focus-visible { box-shadow: 0 0 0 3px #a3c7b3; }
+/* A shared image area keeps portrait pack shots and category art visually consistent. */
+.product-card { border-color: #e1e5da; border-radius: 12px; }
+.product-card:hover { border-color: #9caf92; box-shadow: 0 6px 18px #3d56351a; }
+.product-img-wrapper {
+    height: 160px; min-height: 160px; max-height: 160px; padding: 0;
+    isolation: isolate; background: #f5f5ed; border-bottom: 1px solid #e8ebdf;
+}
+.product-img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.product-img-wrapper[data-image-kind="photo"] {
+    padding: 15px 20px 18px;
+    background: radial-gradient(ellipse at 50% 40%, #fff 30%, #f4f5ee 100%);
+}
+.product-img-wrapper[data-image-kind="photo"] .product-img {
+    width: auto; max-width: 100%; height: 100%; max-height: 100%; border-radius: 3px;
+    box-shadow: 0 3px 9px #34472e12;
+}
+.product-img-wrapper[data-image-kind="illustration"] .product-img { object-fit: cover; }
+.image-caption {
+    position: absolute; left: 8px; bottom: 7px; z-index: 1;
+    padding: 3px 6px; border: 1px solid #d4ddca; border-radius: 5px;
+    background: #fafbf4f2; color: #53644b; font-size: 9px; line-height: 1.3;
+}
+.product-img-wrapper .stock-tag {
+    top: 8px; right: 8px; padding: 3px 7px; border: 1px solid #d8e0cf;
+    border-radius: 6px; background: #fafbf4f2; color: #475e40; font-size: 10px;
+}
+.product-image-unavailable { padding: 20px; color: #687b60; font-size: 12px; text-align: center; }
+@media (prefers-reduced-motion: reduce) {
+    .product-card, .product-img { transition: none; }
+    .product-card:hover, .product-card:hover .product-img { transform: none; }
+}
+.product-actions { display: flex; gap: 5px; margin-top: auto; padding-top: 7px; }
+.product-actions button { border-radius: 5px; padding: 6px 8px; font: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
+.product-add-button { background: #edf5ed; color: #285d42; border: 1px solid #cbdccb; flex: 1; }
+.product-buy-button { background: white; color: #64735e; border: 1px solid #dce4d6; }
+.product-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.product-info { min-height: 180px; gap: 4px; justify-content: flex-start; }
+.product-title { -webkit-line-clamp: 3; min-height: 47px; height: auto; flex-shrink: 0; }
+.catalog-state { grid-column: 1/-1; padding: 30px; text-align: center; color: #6c7d66; }
+.gift-eligible-badge, .gift-line-badge { display: inline-block; color: #307044; background: #eaf5e7; border: 1px solid #d8e9d2; border-radius: 4px; padding: 3px 6px; font-size: 10px; margin-top: 5px; font-weight: 600; }
+.gift-line { background: #f7fcf4; }
+.cart-item-name { font-size: 12px; font-weight: 600; line-height: 1.5; }
+.cart-unit-price, .cart-line-total { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12px; }
+.cart-line-total { font-weight: 650; }
+.retail-reference { display: block; color: #91a086; font-size: 10px; }
+.cart-empty { text-align: center; color: #899580; padding: 35px 12px !important; }
+.offer-discount { color: #315a3d; font-weight: 650; margin: 0 0 10px; }
+.offer-gift { color: #4d7650; line-height: 1.6; font-size: 12px; }
+.cashier-caption { font-size: 10px; color: #89997e; text-transform: uppercase; letter-spacing: .6px; margin: 16px 0 6px; }
+.script-text { margin: 0; padding: 11px 12px; border-left: 3px solid #a1c397; background: #f5f9ef; color: #4d6440; font-size: 12px; line-height: 1.8; }
+.offer-warning, .gift-unlinked-note { font-size: 11px; color: #a17f4c; line-height: 1.7; margin-top: 10px; }
+.gift-picker { margin-top: 16px; padding-top: 13px; border-top: 1px solid #e0e9d7; }
+.gift-picker label { display: block; font-size: 11px; font-weight: 600; color: #4a683c; margin-bottom: 7px; }
+.gift-picker select { width: 100%; font: inherit; font-size: 11px; border: 1px solid #cedec3; padding: 8px; border-radius: 5px; background: #fff; color: #466239; }
+.gift-limit-note { font-size: 10px; color: #7d906f; line-height: 1.6; margin: 7px 0; }
+.btn-add-gift { width: 100%; border: 0; border-radius: 6px; padding: 10px; background: #2d6c46; color: white; font-size: 12px; font-weight: 650; cursor: pointer; }
+.btn-add-gift:disabled { background: #a5b69b; cursor: not-allowed; }
+.btn-checkout:disabled { opacity: .55; cursor: not-allowed; }
+.receipt-gift { color: #2c673d; }
+.receipt-row { gap: 12px; }
+.receipt-row > span:first-child { flex: 1; min-width: 0; }
+.receipt-row > span:last-child { white-space: nowrap; }
+.receipt-card { max-height: 90vh; overflow-y: auto; }
+.btn-inline-reg { border: 0; background: transparent; color: #23734b; cursor: pointer; text-align: left; padding-left: 0; }
+header a { color: inherit; text-decoration: none; border: 1px solid #ffffff50; border-radius: 5px; padding: 5px 9px; }
+@media (max-width: 1050px) {
+    body { overflow: auto; height: auto; min-height: 100vh; }
+    .main-layout { display: flex; flex-wrap: wrap; height: auto; }
+    .col-products { width: 48%; flex: 1 1 48%; }
+    .col-cart { width: 48%; flex: 1 1 48%; min-height: 650px; }
+    .col-ai { width: 100%; flex: 1 1 100%; }
+}
+@media (max-width: 680px) {
+    header { flex-wrap: wrap; gap: 12px; height: auto; padding: 15px; }
+    .main-layout { flex-direction: column; }
+    .col-products, .col-cart, .col-ai { width: 100%; flex-basis: auto; }
+    .product-grid { grid-template-columns: repeat(2,minmax(0,1fr)); max-height: 550px; overflow-y: auto; }
+    .col-cart { min-height: 550px; }
+    .product-title { font-size: 11px; }
+    .cart-table th, .cart-table td { padding-left: 4px; padding-right: 4px; }
+}
+
+/* Quét mã QR thẻ thành viên bằng camera */
+.cust-action-group > input { min-width: 0; }
+.cust-action-group > button { white-space: nowrap; flex-shrink: 0; }
+.btn-scan-cust { padding: 8px 10px; background: #0f766e; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; line-height: 1; }
+.btn-scan-cust:hover { background: #115e59; }
+.scan-card { background: white; width: min(520px, calc(100vw - 32px)); padding: 18px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); }
+.scan-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.scan-head h3 { margin: 0; font-size: 16px; color: #0f172a; }
+.scan-close { border: none; background: none; font-size: 16px; color: #64748b; cursor: pointer; padding: 4px 8px; }
+.scan-stage { position: relative; background: #0f172a; border-radius: 8px; overflow: hidden; aspect-ratio: 4 / 3; }
+.scan-stage video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scan-stage video.mirrored { transform: scaleX(-1); }
+.scan-frame { position: absolute; inset: 18% 24%; border: 3px solid #5eead4; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.35); pointer-events: none; }
+.scan-status { margin: 12px 0 6px; font-size: 13px; color: #334155; line-height: 1.5; }
+.scan-status.error { color: #b91c1c; }
+.scan-actions { display: flex; align-items: center; gap: 10px; }
+.scan-retry { padding: 7px 14px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; }
+.scan-hint { font-size: 11.5px; color: #64748b; line-height: 1.5; }
+
+/* Thẻ thành viên: điểm, mã kích hoạt, mã QR mở trang /member */
+.box-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.btn-member-link { padding: 5px 9px; background: #ecfdf5; color: #0f766e; border: 1px solid #99f6e4; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.btn-member-link:hover { background: #ccfbf1; }
+.cust-member { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 8px; font-size: 12.5px; color: #334155; }
+.cust-member strong { color: #b45309; }
+.cust-member-status { color: #64748b; }
+.btn-activation { margin-left: auto; padding: 4px 8px; background: #fff; color: #0f766e; border: 1px solid #99f6e4; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.btn-activation:disabled { opacity: .6; cursor: progress; }
+.activation-box { text-align: center; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; margin-bottom: 14px; font-size: 13px; color: #78350f; }
+.activation-code { display: block; font-size: 34px; letter-spacing: 6px; color: #92400e; margin: 6px 0; font-variant-numeric: tabular-nums; }
+.activation-box small { display: block; line-height: 1.5; }
+.member-link-body { display: grid; grid-template-columns: 170px 1fr; gap: 16px; align-items: start; }
+.member-qr { width: 170px; aspect-ratio: 1; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: grid; place-items: center; }
+.member-qr svg { width: 100%; height: 100%; display: block; }
+.member-steps { margin: 0 0 8px; padding-left: 18px; font-size: 13px; color: #334155; line-height: 1.55; }
+.member-url { font-size: 12.5px; color: #475569; word-break: break-all; margin: 0; }
+.member-warning { font-size: 12.5px; color: #b91c1c; margin: 6px 0 0; }
+@media (max-width: 560px) { .member-link-body { grid-template-columns: 1fr; } .member-qr { margin: 0 auto; } }

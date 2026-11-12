@@ -1,0 +1,42 @@
+# Python environments and generated files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Java / Maven build output
+target/
+build/
+*.class
+
+# Local secrets; keep examples shareable
+.env
+.env.*
+!.env.example
+
+# Local editor and operating-system files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.DS_Store
+Thumbs.db
+
+# Runtime logs
+*.log
+.runtime/
+
+# Local tool settings
+.claude/settings.local.json
+.github/modernize/
+
+# OnlineSales raw file and generated CSVs are not uploaded
+# (put OnlineSales.xlsx in data/raw, then rebuild with data/prepare_dataset.py)
+data/raw/
+data/processed/

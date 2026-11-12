@@ -1,0 +1,11 @@
+{
+    "explorer.compactFolders": true,
+    "files.exclude": {
+        "**/target": true,
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/.pytest_cache": true,
+        "**/.venv": true
+    },
+    "git.openRepositoryInParentFolders": "never"
+}

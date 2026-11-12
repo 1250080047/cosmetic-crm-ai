@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <script defer src="/js/session.js"></script>
+    <title>Cây POS Bán Hàng Mỹ Phẩm Tích Hợp AI</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f1f5f9; 
+            margin: 0; 
+            padding: 12px; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            color: #1e293b;
+        }
+        
+        header { 
+            background: #0f172a; 
+            color: white; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            margin-bottom: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header-title { font-size: 16.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .header-badge { background: #2563eb; padding: 2px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase; }
+
+        .main-layout { display: flex; gap: 12px; flex: 1; min-height: 0; }
+        
+        /* CỘT 1: SẢN PHẨM */
+        .col-products { 
+            flex: 5.2; 
+            background: white; 
+            border-radius: 8px; 
+            padding: 14px; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); 
+        }
+        
+        .search-box { position: relative; margin-bottom: 10px; }
+        .search-box input { 
+            width: 100%; 
+            padding: 10px 14px 10px 38px; 
+            border: 1.5px solid #cbd5e1; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            outline: none; 
+            transition: all 0.2s; 
+        }
+        .search-box input:focus { 
+            border-color: #2563eb; 
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.12); 
+        }
+        .search-icon { position: absolute; left: 12px; top: 11px; font-size: 15px; color: #64748b; }
+        
+        .category-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: thin; }
+        .cat-btn { 
+            padding: 6px 14px; 
+            border: 1px solid #e2e8f0; 
+            background: #f8fafc; 
+            border-radius: 20px; 
+            font-size: 12.5px; 
+            font-weight: 600; 
+            color: #475569; 
+            cursor: pointer; 
+            white-space: nowrap; 
+            transition: all 0.2s; 
+        }
+        .cat-btn.active, .cat-btn:hover { background: #2563eb; color: white; border-color: #2563eb; }
+
+        .product-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+            grid-auto-rows: 240px; 
+            gap: 12px; 
+            overflow-y: auto; 
+            padding: 4px; 
+            flex: 1; 
+        }
+        
+        .product-card { 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            cursor: pointer; 
+            transition: all 0.2s ease-in-out; 
+            text-align: left; 
+            background: white; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            height: 240px; 
+        }
+        .product-card:hover { 
+            border-color: #2563eb; 
+            box-shadow: 0 6px 15px rgba(37,99,235,0.15); 
+            transform: translateY(-2px); 
+        }
+        
+        .product-img-wrapper { 
+            width: 100%; 
+            height: 130px; 
+            min-height: 130px;
+            max-height: 130px;
+            background: #ffffff; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+            position: relative; 
+            padding: 8px; 
+            border-bottom: 1px solid #f1f5f9; 
+        }
+        .product-img { 
+            max-width: 100%; 
+            max-height: 100%; 
+            width: auto; 
+            height: auto; 
+            object-fit: contain; 
+            transition: transform 0.25s ease; 
+        }
+        .product-card:hover .product-img { transform: scale(1.06); }
+        
+        .stock-tag { 
+            position: absolute; 
+            top: 6px; 
+            right: 6px; 
+            font-size: 10.5px; 
+            padding: 2px 7px; 
+            border-radius: 12px; 
+            background: rgba(15, 23, 42, 0.75); 
+            color: white; 
+            font-weight: 600; 
+            z-index: 2;
+        }
+        .product-info { padding: 8px 10px; display: flex; flex-direction: column; flex: 1; justify-content: space-between; }
+        .product-title { 
+            font-weight: 600; 
+            font-size: 12.5px; 
+            color: #1e293b; 
+            height: 34px; 
+            line-height: 1.35; 
+            display: -webkit-box; 
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden; 
+        }
+        .product-price { color: #dc2626; font-weight: 700; font-size: 14px; margin-top: 4px; }
+        .product-barcode { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+        /* CỘT 2: GIỎ HÀNG */
+        .col-cart { 
+            flex: 3.8; 
+            background: white; 
+            border-radius: 8px; 
+            padding: 14px; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); 
+        }
+        .cart-header { 
+            font-size: 15.5px; 
+            font-weight: 700; 
+            margin: 0 0 10px 0; 
+            color: #0f172a; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .btn-clear-cart {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-clear-cart:hover { background: #dc2626; color: white; }
+
+        .cart-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .cart-table th { background: #f8fafc; padding: 8px 6px; border-bottom: 2px solid #e2e8f0; text-align: left; color: #475569; }
+        .cart-table td { border-bottom: 1px solid #f1f5f9; padding: 8px 6px; vertical-align: middle; }
+        .cart-items-wrapper { flex: 1; overflow-y: auto; }
+        
+        .qty-control { display: flex; align-items: center; gap: 4px; }
+        .qty-btn { 
+            width: 24px; 
+            height: 24px; 
+            background: #e2e8f0; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 13px;
+        }
+        .qty-btn:hover { background: #cbd5e1; }
+        
+        .del-btn { 
+            color: #ef4444; 
+            background: #fee2e2; 
+            border: 1px solid #fecaca; 
+            border-radius: 4px;
+            padding: 4px 6px;
+            cursor: pointer; 
+            font-size: 12px; 
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .del-btn:hover { background: #ef4444; color: white; border-color: #ef4444; }
+
+        .cart-summary { background: #f8fafc; padding: 12px; border-radius: 8px; margin-top: auto; border: 1px solid #e2e8f0; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13.5px; }
+        
+        .final-price { font-size: 19px; font-weight: 800; color: #1d4ed8; border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 6px; }
+        .btn-checkout { 
+            background: #16a34a; 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 6px; 
+            font-size: 15.5px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            width: 100%; 
+            margin-top: 8px; 
+            transition: background 0.2s; 
+        }
+        .btn-checkout:hover { background: #15803d; }
+
+        /* CỘT 3: KHÁCH HÀNG & AI */
+        .col-ai { flex: 3.0; display: flex; flex-direction: column; gap: 12px; }
+        .card-box { background: white; border-radius: 8px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .box-title { font-size: 14.5px; font-weight: 700; margin: 0 0 10px 0; color: #0f172a; }
+        
+        .cust-action-group { display: flex; gap: 6px; }
+        .btn-search-cust { padding: 8px 12px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 13px; }
+        .btn-add-cust { padding: 8px 10px; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 13px; }
+
+        .cust-inline-alert {
+            display: none;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-left: 4px solid #ea580c;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #9a3412;
+            line-height: 1.4;
+        }
+        .cust-inline-alert .btn-inline-reg {
+            display: inline-block;
+            margin-top: 4px;
+            background: #ea580c;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 11.5px;
+        }
+
+        .segment-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 12px; color: white; margin-top: 6px; }
+        .ai-box { background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 14px; }
+        .script-text { 
+            font-style: italic; 
+            color: #92400e; 
+            margin-top: 8px; 
+            line-height: 1.45; 
+            background: white; 
+            padding: 10px; 
+            border-radius: 6px; 
+            border-left: 4px solid #d97706; 
+            font-size: 13px; 
+        }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .new-cust-card { background: white; width: 380px; padding: 22px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #334155; }
+        .form-group input { width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 13.5px; outline: none; }
+
+        .receipt-card { background: white; width: 360px; padding: 22px; border-radius: 8px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .receipt-header { text-align: center; border-bottom: 1px dashed #333; padding-bottom: 10px; margin-bottom: 10px; }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+        .receipt-btn { background: #2563eb; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 15px; }
+    </style>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/css/pos-enhancements.css">
+    <link rel="stylesheet" href="/css/shift.css">
+</head>
+<body>
+
+<header>
+    <div class="header-title">
+        <span>💄 HỆ THỐNG POS BÁN HÀNG MỸ PHẨM</span>
+        <span class="header-badge">AI CLUSTERING INTEGRATED</span>
+    </div>
+    <div style="font-size: 13px;"><a href="/admin" data-management-only hidden>Quản trị cửa hàng · </a>Quầy bán hàng</div>
+<div class="shift-bar" id="shiftBar"><span class="shift-status" id="shiftStatus">Đang kiểm tra ca…</span><button type="button" class="shift-btn" id="openShiftButton" hidden>Mở ca</button><button type="button" class="shift-btn" id="shiftReportButton" hidden>Báo cáo ca</button><button type="button" class="shift-btn shift-close" id="closeShiftButton" hidden>Kết ca</button></div>
+<div style="display:flex;align-items:center;gap:12px;font-size:12px;flex-wrap:wrap"><span data-profile-name></span><a href="/admin" data-management-only hidden style="color:white">Quản trị</a><form th:action="@{/logout}" method="post"><button type="submit" style="padding:6px 12px;cursor:pointer">Đăng xuất</button></form></div></header>
+
+<div class="main-layout">
+    <!-- CỘT 1: SẢN PHẨM -->
+    <div class="col-products">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Tìm nhanh theo tên sản phẩm hoặc mã sản phẩm (ASIN)..." oninput="handleSearch()">
+        </div>
+
+        <div class="category-tabs" id="categoryBar">
+            <button class="cat-btn active" type="button" data-category="ALL">✨ Tất cả</button>
+        </div>
+
+        <div class="product-grid" id="productList"></div>
+    </div>
+
+    <!-- CỘT 2: GIỎ HÀNG -->
+    <div class="col-cart">
+        <div class="cart-header">
+            <div>
+                <span>🛒 Hóa Đơn Hiện Tại</span>
+                <span id="cartCountBadge" style="font-size: 12px; color: #64748b; font-weight: normal;">(0 món)</span>
+            </div>
+            <button class="btn-clear-cart" onclick="clearCart()" title="Xóa toàn bộ các món trong hóa đơn">
+                🗑️ Hủy đơn
+            </button>
+        </div>
+        <div class="cart-items-wrapper">
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th>Tên món</th>
+                        <th style="width: 75px;">SL</th>
+                        <th>Đơn giá</th>
+                        <th>Tiền</th>
+                        <th style="width: 45px; text-align: center;">Xóa</th>
+                    </tr>
+                </thead>
+                <tbody id="cartTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="cart-summary">
+            <div class="summary-row">
+                <span>Tạm tính:</span>
+                <span id="subTotal">0 đ</span>
+            </div>
+            <div class="summary-row" style="color: #dc2626;">
+                <span>Ưu đãi phân khúc (<span id="discountRateText">0%</span>):</span>
+                <span id="discountAmount">-0 đ</span>
+            </div>
+            
+            <div class="summary-row final-price">
+                <span>TỔNG CỘNG:</span>
+                <span id="finalTotal">0 đ</span>
+            </div>
+            <div class="payment-row">
+                <label for="paymentMethod">Thanh toán:</label>
+                <select id="paymentMethod">
+                    <option value="CASH">Tiền mặt</option>
+                    <option value="BANK_TRANSFER">Chuyển khoản</option>
+                    <option value="CARD">Thẻ</option>
+                </select>
+            </div>
+            <p class="shift-warning" id="shiftWarning" hidden>Bạn chưa mở ca. Bấm “Mở ca” ở thanh trên để bắt đầu bán hàng.</p>
+            <button class="btn-checkout" onclick="handleCheckout()">⚡ THANH TOÁN & TRỪ KHO</button>
+        </div>
+    </div>
+
+    <!-- CỘT 3: KHÁCH HÀNG & AI -->
+    <div class="col-ai">
+        <div class="card-box">
+            <div class="box-title box-title-row"><span>👤 Nhận Diện Khách Hàng</span><button type="button" class="btn-member-link" id="memberLinkButton" title="Mã QR để khách mở trang thẻ thành viên trên điện thoại">📱 Thẻ thành viên</button></div>
+            <div class="cust-action-group">
+                <input type="text" id="phoneInput" placeholder="SĐT hoặc mã khách (VD: KH00012)..." style="flex: 1; padding: 8px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 13px;" onkeydown="if(event.key==='Enter') lookupCustomer()" oninput="hideCustAlert()">
+                <button class="btn-search-cust" onclick="lookupCustomer()">Tìm</button>
+                <button class="btn-scan-cust" id="scanCustomerButton" type="button" title="Quét mã QR thẻ thành viên bằng camera" aria-label="Quét mã QR thẻ thành viên bằng camera">📷</button>
+                <button class="btn-add-cust" onclick="openNewCustomerModal()" title="Đăng ký tài khoản thành viên mới">+ Mới</button>
+            </div>
+            
+            <div id="custInlineAlert" class="cust-inline-alert"></div>
+
+            <div id="customerInfo" style="margin-top: 12px; display: none; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; position: relative;">
+                <button onclick="removeCustomer()" style="position: absolute; right: 8px; top: 8px; border: none; background: none; color: #94a3b8; cursor: pointer; font-size: 14px;" title="Bỏ chọn khách này">✕</button>
+                <div style="font-size: 13.5px;">Khách hàng: <strong id="custName">---</strong></div>
+                <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Mã: <strong id="custCode">---</strong> · SĐT: <span id="custPhone">---</span></div>
+                <div style="font-size: 12px; color: #64748b; margin-top: 2px;" id="custHistory"></div>
+                <div id="custSegment" class="segment-badge">VIP</div>
+                <div class="cust-member">
+                    <span>Điểm tích lũy: <strong id="custPoints">0</strong></span>
+                    <span class="cust-member-status" id="custMemberStatus"></span>
+                    <button type="button" class="btn-activation" id="activationButton">🔑 Cấp mã kích hoạt thẻ</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-box ai-box">
+            <div class="box-title" style="color: #b45309;">🤖 AI Phân Cụm & Đề Xuất Ưu Đãi</div>
+            <div id="aiContent" style="color: #64748b; font-size: 13px;">Nhập số điện thoại khách hàng để AI kích hoạt ưu đãi cá nhân hóa.</div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL THÊM KHÁCH HÀNG -->
+<div id="memberModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="memberTitle">
+    <div class="scan-card">
+        <div class="scan-head">
+            <h3 id="memberTitle">📱 Thẻ thành viên cho khách</h3>
+            <button type="button" class="scan-close" id="memberClose" aria-label="Đóng">✕</button>
+        </div>
+        <div class="activation-box" id="activationBox" hidden>
+            <div>Mã kích hoạt cho <strong id="activationName"></strong></div>
+            <strong class="activation-code" id="activationCode">——————</strong>
+            <small id="activationNote"></small>
+        </div>
+        <div class="member-link-body">
+            <div class="member-qr" id="memberQr" aria-label="Mã QR mở trang thẻ thành viên"></div>
+            <div>
+                <ol class="member-steps">
+                    <li>Khách mở <strong>camera điện thoại</strong>, quét mã QR bên cạnh để mở trang thẻ thành viên.</li>
+                    <li id="memberStepAccount">Khách mới chọn <strong>Đăng ký</strong>; khách đã mua ở cửa hàng chọn <strong>Kích hoạt thẻ</strong> và nhập mã kích hoạt.</li>
+                    <li>Khách đưa thẻ (mã QR đổi mỗi 60 giây), thu ngân bấm <strong>📷</strong> để quét.</li>
+                </ol>
+                <p class="member-url">Hoặc gõ địa chỉ: <strong id="memberUrl">…</strong></p>
+                <p class="member-warning" id="memberWarning" hidden></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="scanModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="scanTitle">
+    <div class="scan-card">
+        <div class="scan-head">
+            <h3 id="scanTitle">📷 Quét mã thẻ thành viên</h3>
+            <button type="button" class="scan-close" id="scanClose" aria-label="Đóng">✕</button>
+        </div>
+        <div class="scan-stage">
+            <video id="scanVideo" playsinline muted></video>
+            <div class="scan-frame" aria-hidden="true"></div>
+        </div>
+        <p class="scan-status" id="scanStatus" role="status">Đang mở camera…</p>
+        <div class="scan-actions">
+            <button type="button" class="scan-retry" id="scanRetry" hidden>Thử lại</button>
+            <span class="scan-hint">Quét mã QR trên trang thẻ thành viên của khách (đổi mỗi 60 giây). Hình ảnh camera không được lưu lại.</span>
+        </div>
+    </div>
+</div>
+
+<div id="newCustomerModal" class="modal">
+    <div class="new-cust-card">
+        <h3 style="margin-top: 0; margin-bottom: 14px; font-size: 16px; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+            <span>✨</span> Đăng Ký Thành Viên Mới
+        </h3>
+        <div class="form-group">
+            <label>Số điện thoại (*):</label>
+            <input type="text" id="newCustPhone" placeholder="Ví dụ: 0912345678">
+        </div>
+        <div class="form-group">
+            <label>Họ và tên khách hàng (*):</label>
+            <input type="text" id="newCustName" placeholder="Ví dụ: Nguyễn Phương Anh">
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 18px;">
+            <button onclick="closeNewCustomerModal()" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; background: #f1f5f9; border-radius: 6px; font-weight: 600; cursor: pointer;">Hủy</button>
+            <button onclick="saveNewCustomer()" style="flex: 2; padding: 10px; border: none; background: #16a34a; color: white; border-radius: 6px; font-weight: 700; cursor: pointer;">💾 Lưu & Áp Dụng</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL HÓA ĐƠN -->
+<div id="receiptModal" class="modal">
+    <div class="receipt-card">
+        <div class="receipt-header">
+            <h3 style="margin: 0;">COSMETIC SHOP</h3>
+            <div style="font-size: 12px;">Hóa Đơn Bán Lẻ</div>
+            <div id="rcpTransNo" style="font-size: 11px; margin-top: 4px;">Mã: HD...</div>
+            <div id="rcpDate" style="font-size: 11px;">Ngày: ...</div>
+        </div>
+        <div style="font-size: 12px; margin-bottom: 8px;">
+            Khách hàng: <strong id="rcpCustName">Khách vãng lai</strong><br>
+            Ưu đãi: <span id="rcpSegment">Theo hóa đơn thực tế</span>
+        </div>
+        <div style="border-top: 1px dashed #333; padding-top: 6px;" id="rcpItems"></div>
+        <div style="border-top: 1px dashed #333; padding-top: 8px; margin-top: 8px;">
+            <div class="receipt-row"><span>Tạm tính:</span><span id="rcpSubtotal">0 đ</span></div>
+            <div class="receipt-row"><span>Giảm giá (%):</span><span id="rcpDiscount">0 đ</span></div>
+            <div class="receipt-row" style="font-weight: bold; font-size: 14px;"><span>TỔNG TIỀN:</span><span id="rcpFinal">0 đ</span></div>
+            <div class="receipt-row" id="rcpPointsRow" style="display:none;"><span>Điểm tích lũy:</span><span id="rcpPoints"></span></div>
+        </div>
+        <div style="text-align: center; margin-top: 12px; font-size: 12px;">Cảm ơn quý khách & Hẹn gặp lại!</div>
+        <button class="receipt-btn" onclick="closeReceipt()">Đóng & Tạo đơn mới</button>
+    </div>
+</div>
+
+<!-- MODAL MỞ CA -->
+<div id="openShiftModal" class="modal">
+    <div class="new-cust-card">
+        <h3 style="margin-top:0">🕘 Mở ca làm việc</h3>
+        <p style="font-size:13px;color:#475569">Mọi hóa đơn từ lúc này sẽ được ghi vào ca của bạn để làm báo cáo khi kết ca.</p>
+        <div class="form-group"><label for="openingCash">Tiền mặt đầu ca trong két (đ):</label><input type="number" id="openingCash" min="0" step="1000" value="0"></div>
+        <div style="display:flex;gap:8px;margin-top:18px">
+            <button type="button" class="modal-secondary" id="cancelOpenShift">Để sau</button>
+            <button type="button" class="modal-primary" id="confirmOpenShift">Bắt đầu ca</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL BÁO CÁO CA -->
+<div id="shiftReportModal" class="modal">
+    <div class="shift-report-card">
+        <div class="shift-report-head"><h3 id="shiftReportTitle">Báo cáo ca</h3><button type="button" class="modal-secondary" id="closeShiftReport">Đóng</button></div>
+        <div id="shiftReportBody"></div>
+        <div id="shiftCloseForm" class="shift-close-form" hidden>
+            <div class="form-group"><label for="countedCash">Tiền mặt đếm được khi kết ca (đ):</label><input type="number" id="countedCash" min="0" step="1000"></div>
+            <div class="form-group"><label for="shiftNote">Ghi chú (tùy chọn):</label><input type="text" id="shiftNote" maxlength="500"></div>
+            <button type="button" class="modal-primary danger" id="confirmCloseShift">Xác nhận kết ca</button>
+        </div>
+        <div class="shift-report-actions">
+            <button type="button" class="modal-secondary" id="exportShiftRevenue">Xuất doanh thu (CSV)</button>
+            <button type="button" class="modal-secondary" id="exportShiftGifts">Xuất quà tặng (CSV)</button>
+            <button type="button" class="modal-secondary" id="printShiftReport">In báo cáo</button>
+        </div>
+    </div>
+</div>
+
+<script defer src="/js/shift-report.js"></script>
+<script defer src="/js/pos.js"></script>
+<script defer src="/js/vendor/jsQR-1.4.0.js"></script>
+<script defer src="/js/customer-scan.js"></script>
+<script defer src="/js/vendor/qrcode-generator-1.4.4.js"></script>
+<script defer src="/js/qr-svg.js"></script>
+
+</body>
+</html>

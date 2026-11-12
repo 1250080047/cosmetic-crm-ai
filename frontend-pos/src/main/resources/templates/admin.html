@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Quản trị cửa hàng | Cosmetic POS</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/admin-workspace.css">
+    <link rel="stylesheet" href="/css/shift.css">
+    <link rel="stylesheet" href="/css/model.css">
+    <script defer src="/js/session.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="/js/admin.js"></script>
+    <script defer src="/js/shift-report.js"></script>
+    <script defer src="/js/admin-workspace.js"></script>
+    <script defer src="/js/model.js"></script>
+</head>
+<body>
+    <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+        <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+        <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+        <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 7h6M9 11h6M9 15h3"/></symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.5-1L20 9M4 15l2.4 3A7 7 0 0 0 17.9 17"/></symbol>
+        <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M21 21v-2a6 6 0 0 0-4-5.65"/></symbol>
+        <symbol id="i-box" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 8v9l9 5 9-5V8M12 13v9M7.5 5.5l9 5"/></symbol>
+        <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 9h18M17 13h4v4h-4a2 2 0 0 1 0-4Z"/></symbol>
+        <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+        <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+        <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+        <symbol id="i-send" viewBox="0 0 24 24"><path d="m21 3-7 18-4-7-7-4 18-7ZM10 14 21 3"/></symbol>
+        <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
+        <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M7 3v6h9V3M7 21v-8h10v8"/></symbol>
+        <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    </svg>
+
+    <a class="skip-link" href="#mainContent">Đến nội dung chính</a>
+    <aside class="sidebar">
+        <a class="brand" href="/admin" aria-label="Cosmetic POS - trang quản trị">
+            <span class="brand-mark"><svg class="icon"><use href="#i-spark"/></svg></span>
+            <span>COSMETIC<span class="brand-subtitle">POS & CUSTOMER INSIGHTS</span></span>
+        </a>
+        <div class="nav-caption">KHÔNG GIAN QUẢN TRỊ</div>
+        <nav aria-label="Điều hướng quản trị">
+            <button class="nav-item active" data-tab="overview" aria-current="page"><svg class="icon"><use href="#i-grid"/></svg><span>Tổng quan</span></button>
+            <button class="nav-item" data-tab="model"><svg class="icon"><use href="#i-spark"/></svg><span>Mô hình phân cụm</span></button>
+            <button class="nav-item" data-tab="strategies"><svg class="icon"><use href="#i-target"/></svg><span>Chiến lược ưu đãi</span></button>
+            <button class="nav-item" data-tab="orders"><svg class="icon"><use href="#i-receipt"/></svg><span>Lịch sử hóa đơn</span></button>
+            <button class="nav-item" data-tab="revenue"><svg class="icon"><use href="#i-wallet"/></svg><span>Doanh thu & so sánh</span></button>
+            <button class="nav-item" data-tab="products"><svg class="icon"><use href="#i-box"/></svg><span>Sản phẩm & tồn kho</span></button>
+            <button class="nav-item" data-tab="customers"><svg class="icon"><use href="#i-users"/></svg><span>Khách hàng</span></button>
+            <button class="nav-item" data-tab="shifts"><svg class="icon"><use href="#i-receipt"/></svg><span>Ca làm việc</span></button>
+            <button class="nav-item" data-tab="users" data-admin-only hidden><svg class="icon"><use href="#i-users"/></svg><span>Tài khoản & quyền</span></button>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="sidebar-note"><svg class="icon"><use href="#i-users"/></svg><p>Hiểu khách hàng.<br><strong>Bán hàng tốt hơn.</strong></p></div>
+            <a class="sidebar-pos" href="/pos" target="_blank" rel="noopener">Đi đến quầy POS<svg class="icon"><use href="#i-arrow"/></svg></a>
+            <div class="sidebar-footer">Hệ thống quản lý bán lẻ mỹ phẩm</div>
+        </div>
+    </aside>
+
+    <main id="mainContent">
+        <header class="topbar">
+            <div class="breadcrumb">Quản trị<svg class="icon"><use href="#i-chevron"/></svg><span id="breadcrumbPage">Tổng quan</span></div>
+            <div class="topbar-actions"><span class="today" id="today"></span><span class="topbar-divider"></span><span class="profile-label" data-profile-name>Đang đọc tài khoản…</span><form th:action="@{/logout}" method="post"><button class="button button-secondary button-small" type="submit">Đăng xuất</button></form></div>
+        </header>
+        <div class="content-body">
+            <div class="page-heading">
+                <div><p class="eyebrow">COSMETIC POS / ANALYTICS</p><h1 id="pageTitle">Tổng quan kinh doanh</h1><p id="pageDescription" class="page-description">Theo dõi hoạt động cửa hàng và hiểu rõ từng nhóm khách hàng.</p></div>
+                <div class="heading-actions"><button class="button button-secondary" id="refreshButton"><svg class="icon"><use href="#i-refresh"/></svg>Làm mới</button><a class="button button-primary" href="/pos" target="_blank" rel="noopener">Mở quầy POS<svg class="icon"><use href="#i-arrow"/></svg></a></div>
+            </div>
+            <div class="data-bar" aria-live="polite">
+                <div class="connection-group"><span class="connection" id="databaseStatus" data-state="loading"><span class="status-dot"></span>Đang đọc dữ liệu cửa hàng</span><span class="connection" id="aiStatus" data-state="loading"><span class="status-dot"></span>Đang kết nối phân tích AI</span></div>
+                <span class="last-sync" id="lastSync">Chưa cập nhật</span>
+            </div>
+
+            <section id="tab-overview" class="tab-panel" aria-label="Tổng quan">
+                <div class="stats-grid">
+                    <article class="stat-card"><div class="stat-top"><span>Doanh thu thực thu</span><span class="stat-icon green"><svg class="icon"><use href="#i-wallet"/></svg></span></div><strong class="stat-value" id="kpiRevenue">—</strong><div class="stat-note" id="revenueNote">Sau giảm giá · toàn bộ hóa đơn</div></article>
+                    <article class="stat-card"><div class="stat-top"><span>Khách hàng được phân tích</span><span class="stat-icon violet"><svg class="icon"><use href="#i-users"/></svg></span></div><strong class="stat-value" id="kpiCustomers">—</strong><div class="stat-note" id="customersNote">Theo tập dữ liệu RFM của dịch vụ AI</div></article>
+                    <article class="stat-card"><div class="stat-top"><span>Sản phẩm</span><span class="stat-icon sand"><svg class="icon"><use href="#i-box"/></svg></span></div><strong class="stat-value" id="kpiProducts">—</strong><div class="stat-note" id="productsNote">Tổng mặt hàng trong danh mục</div></article>
+                    <article class="stat-card"><div class="stat-top"><span>Hóa đơn ghi nhận</span><span class="stat-icon blue"><svg class="icon"><use href="#i-receipt"/></svg></span></div><strong class="stat-value" id="kpiOrders">—</strong><div class="stat-note" id="ordersNote">Tổng số bản ghi hóa đơn</div></article>
+                </div>
+
+                <section class="cluster-controller card" aria-labelledby="clusterHeading">
+                    <div class="controller-top"><div><div class="section-eyebrow">PHÂN TÍCH KHÁCH HÀNG · LRFM</div><h2 id="clusterHeading">Mô hình nhóm khách đang áp dụng</h2><p class="muted" id="modelSummary">Đang đọc mô hình…</p></div><span class="recommend-badge" id="aiRecommendBadge"><svg class="icon"><use href="#i-spark"/></svg><span>Đang kiểm tra dữ liệu</span></span></div>
+                    <div class="controller-bottom"><div class="model-facts" id="modelFacts"></div><button class="button button-primary" id="openModelTab" type="button"><svg class="icon"><use href="#i-arrow" /></svg>Xem mô hình &amp; kiểm tra lệch</button></div>
+                    <div class="preview-note" id="previewNote"><svg class="icon"><use href="#i-info"/></svg><span>Mô hình chỉ học một lần trên dữ liệu nền. Khách mới được đặt lên thước đo cũ nên thêm bao nhiêu khách cũng không làm đổi nhóm.</span></div>
+                </section>
+
+                <section class="cluster-controller card analysis-picker" aria-labelledby="analysisHeading">
+                    <div class="controller-top"><div><div class="section-eyebrow">PHÂN TÍCH DỮ LIỆU NỀN · CHỌN SỐ NHÓM</div><h2 id="analysisHeading">Chia dữ liệu nền thành bao nhiêu nhóm?</h2><p class="muted" id="analysisSummary">Đang đánh giá các cách chia…</p></div><span class="subtle-tag analysis-mode" id="analysisMode">—</span></div>
+                    <div class="controller-bottom"><div class="k-select-wrap"><span class="field-caption">Số nhóm khách hàng</span><div class="k-selector-group" id="analysisK" role="group" aria-label="Chọn số nhóm để xem phân tích"></div></div><button class="button button-secondary" id="applyAnalysisK" type="button" hidden><svg class="icon"><use href="#i-arrow"/></svg><span>Áp dụng</span></button></div>
+                    <div class="preview-note"><svg class="icon"><use href="#i-info"/></svg><span id="analysisNote">Chọn số nhóm để xem cơ cấu và chân dung khách bên dưới. Đây chỉ là xem thử: quầy POS vẫn dùng mô hình đang áp dụng cho tới khi bạn áp dụng ở trang Mô hình phân cụm.</span></div>
+                </section>
+
+                <div class="charts-row">
+                    <section class="card chart-card" aria-labelledby="metricsHeading"><div class="card-heading"><div><h2 id="metricsHeading">Đánh giá chất lượng phân cụm</h2><p class="muted" id="metricsSubtitle">Chất lượng chia nhóm trên dữ liệu nền, theo từng số nhóm.</p></div><span class="subtle-tag">LRFM · K-means</span></div><div class="chart-legend"><span><i class="legend-line inertia"></i>Độ phân tán (Inertia)</span><span><i class="legend-line silhouette"></i>Độ tách biệt (Silhouette)</span></div><div class="chart-stage"><canvas id="clusteringChart" role="img" aria-label="Biểu đồ Inertia và Silhouette theo số cụm"></canvas><div class="chart-state" id="metricsState">Đang tải kết quả phân tích…</div></div><div class="chart-footnote"><svg class="icon"><use href="#i-info"/></svg>Silhouette cao (nhóm tách biệt rõ) và Inertia giảm chậm lại là hai tín hiệu để chọn số nhóm. Bấm vào một điểm để xem cách chia đó.</div></section>
+                    <section class="card chart-card distribution-card" aria-labelledby="distributionHeading"><div class="card-heading"><div><h2 id="distributionHeading">Cơ cấu khách hàng</h2><p class="muted" id="distributionSubtitle">Chưa có mô hình</p></div><span class="subtle-tag" id="selectedKTag">K = —</span></div><div class="distribution-content"><div class="donut-stage"><canvas id="distributionChart" role="img" aria-label="Biểu đồ tỷ trọng khách hàng theo nhóm"></canvas><div class="chart-state" id="distributionState">Đang tải dữ liệu…</div></div><div class="distribution-legend" id="distributionLegend"></div></div></section>
+                </div>
+
+                <section class="card profile-card" aria-labelledby="profilesHeading"><div class="card-heading"><div><h2 id="profilesHeading">Chân dung từng phân khúc</h2><p class="muted" id="profilesSubtitle">Số liệu trung bình của khách lúc mô hình học (dữ liệu nền) và số khách đang thuộc nhóm hôm nay.</p></div><label class="search-field"><svg class="icon"><use href="#i-search"/></svg><input id="clusterSearch" type="search" placeholder="Tìm phân khúc…" aria-label="Tìm phân khúc"></label></div><div class="table-scroll"><table><thead><tr><th>Phân khúc</th><th class="numeric">Khách lúc học</th><th class="numeric">Tỷ trọng</th><th class="numeric">Khách hôm nay</th><th class="numeric">Chi tiêu 12 tháng TB</th><th class="numeric">Số đơn TB</th><th class="numeric">Chưa mua (ngày)</th><th>Đặc điểm hành vi</th></tr></thead><tbody id="clusterProfileTableBody"><tr><td colspan="8" class="table-state">Đang chờ kết quả phân tích…</td></tr></tbody></table></div><div class="card-footer"><span id="profilesSummary">Chưa có dữ liệu phân khúc</span><span>L: gắn bó · R: lần mua gần nhất · F: số đơn · M: chi tiêu (12 tháng)</span></div></section>
+            </section>
+
+            <section id="tab-model" class="tab-panel" hidden aria-label="Mô hình phân cụm">
+                <ol class="model-flow card" aria-label="Cách mô hình vận hành">
+                    <li><strong>Học một lần</strong><span>Trên dữ liệu nền OnlineSales tại ngày tham chiếu: lưu ngưỡng cắt, trung bình, độ lệch chuẩn và tâm nhóm.</span></li>
+                    <li><strong>Đặt lên thước đo cũ</strong><span>Mỗi khách (cũ hoặc mới) được đo L, R, F, M hôm nay rồi so với thước đo đã lưu. Không học lại.</span></li>
+                    <li><strong>Kiểm tra lệch</strong><span>So khách đang mua với dữ liệu nền. Chỉ kết luận khi đủ số khách.</span></li>
+                    <li><strong>Huấn luyện lại có kiểm soát</strong><span>Xem trước phiên bản mới, so sánh, ghi lý do rồi mới áp dụng. Phiên bản cũ được lưu lại.</span></li>
+                </ol>
+                <p id="modelStatusText" class="workspace-status" role="status">Đang đọc mô hình…</p>
+                <div class="stats-grid" id="modelKpis"></div>
+                <div class="model-columns">
+                    <section class="card"><div class="card-heading"><div><h2>Thước đo của mô hình</h2><p class="muted" id="rulerCaption">Giá trị học được từ dữ liệu huấn luyện.</p></div></div><div class="table-scroll"><table><thead><tr><th>Chỉ số</th><th class="numeric">Nhỏ nhất</th><th class="numeric">Trung vị</th><th class="numeric">Lớn nhất</th><th class="numeric">Ngưỡng cắt (P99)</th><th class="numeric">Mean (log)</th><th class="numeric">Std (log)</th></tr></thead><tbody id="rulerBody"><tr><td colspan="7" class="table-state">Đang tải…</td></tr></tbody></table></div><p class="model-note">Đặt khách lên thước đo: z = (log(1 + min(x, ngưỡng cắt)) − mean) / std, rồi chọn tâm nhóm gần nhất.</p></section>
+                    <section class="card"><div class="card-heading"><div><h2>Kiểm tra lệch dữ liệu</h2><p class="muted" id="driftCaption">So khách mua trong 12 tháng gần đây với dữ liệu nền.</p></div><span class="subtle-tag" id="driftBadge">—</span></div>
+                        <p id="driftMessage" class="model-message">Đang kiểm tra…</p><ul id="driftReasons" class="model-reasons"></ul>
+                        <div class="table-scroll"><table><thead><tr><th>Chỉ số</th><th class="numeric">Trung vị nền</th><th class="numeric">Trung vị hiện tại</th><th class="numeric">Lệch TB (độ lệch chuẩn)</th><th class="numeric">Ngoài khoảng đã học</th></tr></thead><tbody id="driftFeatureBody"></tbody></table></div>
+                        <div class="model-actions"><button class="button button-secondary" id="driftCheckButton" type="button">Kiểm tra &amp; ghi nhật ký</button><button class="button button-secondary" id="rescoreButton" type="button">Xếp lại nhóm cho hôm nay</button></div></section>
+                </div>
+                <section class="card"><div class="card-heading"><div><h2>Nhóm khách của mô hình</h2><p class="muted" id="modelClusterCaption">Lúc học và hôm nay.</p></div></div><div class="table-scroll"><table><thead><tr><th>Nhóm</th><th class="numeric">Lúc học</th><th class="numeric">Tỷ trọng lúc học</th><th class="numeric">Hôm nay (mọi khách)</th><th class="numeric">Khách mua 12 tháng gần đây</th><th>Khách điển hình lúc học</th></tr></thead><tbody id="modelClusterBody"><tr><td colspan="6" class="table-state">Đang tải…</td></tr></tbody></table></div></section>
+                <section class="card" aria-labelledby="trainHeading"><div class="card-heading"><div><h2 id="trainHeading">Huấn luyện mô hình</h2><p class="muted" id="trainCaption">Chọn dữ liệu và số nhóm, xem trước rồi mới áp dụng.</p></div></div>
+                    <div class="orders-toolbar"><label class="payment-filter">Dữ liệu huấn luyện<select id="trainSource"><option value="base">Chỉ dữ liệu nền (OnlineSales)</option><option value="extended">Dữ liệu nền + khách mua 12 tháng gần đây</option></select></label><span class="muted" id="trainRecommend"></span></div>
+                    <div class="chart-stage model-chart"><canvas id="trainChart" role="img" aria-label="Độ tách biệt và độ phân tán theo số nhóm"></canvas><div class="chart-state" id="trainChartState">Đang tải…</div></div>
+                    <div class="controller-bottom"><div class="k-select-wrap"><span class="field-caption">Số nhóm khách hàng</span><div class="k-selector-group" id="trainK" aria-label="Chọn số nhóm để xem trước"></div></div><button class="button button-secondary" id="previewButton" type="button" disabled>Xem trước</button></div>
+                    <div id="previewResult" class="model-preview" hidden></div>
+                    <div id="deployBox" class="model-deploy" hidden><label>Lý do áp dụng (lưu vào lịch sử phiên bản)<textarea id="deployReason" maxlength="500" rows="2" placeholder="Ví dụ: kiểm tra lệch ngày … cho thấy khách hiện tại chi tiêu cao hơn dữ liệu nền"></textarea></label><button class="button button-primary" id="deployModelButton" type="button"><svg class="icon"><use href="#i-check" /></svg>Áp dụng phiên bản này</button></div>
+                </section>
+                <section class="card"><div class="card-heading"><div><h2>Lịch sử phiên bản</h2><p class="muted">Phiên bản cũ không bị xóa để đối chiếu trong báo cáo.</p></div></div><div class="table-scroll"><table><thead><tr><th>Phiên bản</th><th>Trạng thái</th><th class="numeric">Số nhóm</th><th>Ngày tham chiếu</th><th>Dữ liệu huấn luyện</th><th>Áp dụng lúc</th><th>Người áp dụng · lý do</th></tr></thead><tbody id="versionBody"></tbody></table></div></section>
+            </section>
+            <section id="tab-strategies" class="tab-panel" hidden aria-label="Chiến lược ưu đãi">
+                <div class="strategies-layout">
+                    <section class="card strategy-list-card"><div class="card-heading"><div><h2>Ưu đãi theo phân khúc</h2><p class="muted" id="strategySyncNote">Đang kiểm tra phân cụm đã áp dụng…</p></div><span class="count-badge" id="strategyCount">—</span></div><div id="strategyList" class="strategy-list"><p class="empty-state">Đang tải chiến lược…</p></div></section>
+                    <section class="card strategy-editor"><div class="card-heading"><div><h2>Chi tiết ưu đãi</h2><p class="muted" id="strategyUpdated">Chọn một chiến lược để xem.</p></div><span class="subtle-tag" id="strategyActive">—</span></div><form id="strategyForm"><fieldset id="strategyFields" disabled><div class="form-row"><label>Nhóm khách hàng<select id="stratSelect" required></select></label><label>Mức giảm giá (%)<input type="number" id="stratDiscount" min="0" max="100" step="0.01" required></label></div><label>Tên chiến lược<input id="stratTitle" type="text" maxlength="150" required autocomplete="off"></label><label>Quà tặng<input id="stratGift" type="text" maxlength="255" autocomplete="off"></label><label>Lời tư vấn dành cho thu ngân<textarea id="stratScript" rows="5" maxlength="10000"></textarea></label><label class="checkbox-label"><input type="checkbox" id="stratEnabled">Bật ưu đãi cho quầy POS</label></fieldset><div class="form-footer"><p>Thông tin chỉ được lưu sau khi bạn xác nhận.</p><button class="button button-primary" id="saveStrategyButton" type="submit" disabled><svg class="icon"><use href="#i-save"/></svg>Lưu thay đổi</button></div></form></section>
+                </div>
+            </section>
+
+            <section id="tab-orders" class="tab-panel" hidden aria-label="Lịch sử hóa đơn">
+                <section class="card orders-card"><div class="card-heading"><div><h2>Hóa đơn cửa hàng</h2><p class="muted">Dữ liệu từ bảng orders, sắp xếp theo thời gian mới nhất.</p></div><button class="button button-secondary" id="exportOrdersButton" disabled><svg class="icon"><use href="#i-download"/></svg>Xuất CSV</button></div><div class="orders-toolbar"><label class="search-field"><svg class="icon"><use href="#i-search"/></svg><input id="orderSearch" type="search" placeholder="Mã hóa đơn, mã/tên khách, hoặc gõ: tiền mặt, chuyển khoản, thẻ…" aria-label="Tìm hóa đơn"></label><label class="payment-filter"><span>Thanh toán</span><select id="paymentFilter" aria-label="Lọc phương thức thanh toán"><option value="">Tất cả phương thức</option><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option><option value="CARD">Thẻ</option><option value="ONLINE">Trực tuyến (đơn lịch sử)</option></select></label><label class="payment-filter">Từ ngày<input type="date" id="orderFrom" aria-label="Hóa đơn từ ngày"></label><label class="payment-filter">Đến ngày<input type="date" id="orderTo" aria-label="Hóa đơn đến ngày"></label><span class="result-count" id="orderResultCount">Chưa tải dữ liệu</span></div><div class="table-scroll"><table><thead><tr><th>Mã hóa đơn</th><th>Thời gian</th><th>Khách hàng</th><th class="numeric">Tạm tính</th><th class="numeric">Giảm giá</th><th class="numeric">Thực thu</th><th>Thanh toán</th></tr></thead><tbody id="ordersTableBody"><tr><td colspan="7" class="table-state">Đang tải hóa đơn…</td></tr></tbody></table></div><div class="card-footer"><span id="ordersPaginationInfo">—</span><div class="pagination"><button class="button button-small button-secondary" id="previousPage" disabled>Trước</button><span id="pageNumber">—</span><button class="button button-small button-secondary" id="nextPage" disabled>Sau</button></div></div></section>
+            </section>
+            <section id="tab-revenue" class="tab-panel" hidden aria-label="Doanh thu và so sánh">
+                <form id="revenueFilters" class="card workspace-toolbar">
+                    <label>Kỳ thống kê<select id="revenueGranularity"><option value="month">Theo tháng</option><option value="year">Theo năm</option></select></label>
+                    <label>Năm<select id="revenueYear" required></select></label><label id="monthField">Tháng<select id="revenueMonth"></select></label>
+                    <label>Đối chiếu<select id="revenueComparison"><option value="year">Cùng kỳ năm trước</option><option value="previous">Kỳ trước</option></select></label>
+                    <button class="button button-primary" type="submit" id="runRevenue">Xem báo cáo</button><button class="button button-secondary" id="exportRevenue" type="button" disabled>Xuất CSV</button>
+                </form>
+                <p id="revenueStatus" class="workspace-status" role="status">Đang chuẩn bị bộ lọc…</p>
+                <div id="revenueResults" hidden>
+                    <p id="revenueWindow" class="workspace-period"></p>
+                    <div class="stats-grid" id="revenueKpis"></div>
+                    <section class="card workspace-card"><div class="card-heading"><div><h2>Doanh thu qua 12 tháng</h2><p class="muted" id="revenueChartCaption"></p></div></div><div class="workspace-chart"><canvas id="revenueChart" role="img" aria-label="So sánh doanh thu từng tháng giữa hai năm"></canvas><p id="revenueChartFallback" hidden>Biểu đồ chưa tải được; xem đầy đủ số liệu ở bảng bên dưới.</p></div><div class="table-scroll"><table><thead><tr><th>Tháng</th><th class="numeric">Năm được chọn</th><th class="numeric">Năm trước</th><th class="numeric">Chênh lệch</th></tr></thead><tbody id="revenueTrendBody"></tbody></table></div></section>
+                    <section class="workspace-section"><h2>Yếu tố biến động & hướng kiểm tra</h2><p class="muted">Gợi ý từ phép tính trên dữ liệu đã lưu. Bạn cần kiểm tra giả thuyết và đo kết quả trước khi mở rộng chiến dịch.</p><div id="revenueInsights" class="insights-grid"></div></section>
+                    <div class="workspace-columns"><section class="card"><div class="card-heading"><div><h2>Đóng góp theo nhóm hàng</h2><p class="muted">Doanh thu sau giảm giá được phân bổ theo tỷ trọng dòng hàng.</p></div></div><div class="table-scroll"><table><thead><tr><th>Nhóm hàng</th><th class="numeric">Kỳ chọn</th><th class="numeric">Kỳ đối chiếu</th><th class="numeric">Chênh lệch</th></tr></thead><tbody id="revenueCategoryBody"></tbody></table></div></section><section class="card"><div class="card-heading"><h2>Phương thức thanh toán</h2></div><div class="table-scroll"><table><thead><tr><th>Phương thức</th><th class="numeric">Số đơn</th><th class="numeric">Doanh thu</th></tr></thead><tbody id="revenuePaymentBody"></tbody></table></div></section></div>
+                    <section class="card workspace-card"><div class="card-heading"><div><h2>10 sản phẩm có doanh số dòng hàng cao nhất</h2><p class="muted">Doanh số trước giảm giá của hóa đơn. Số lượng bao gồm các dòng giá 0.</p></div></div><div class="table-scroll"><table><thead><tr><th>Sản phẩm</th><th class="numeric">Số lượng</th><th class="numeric">Trong đó giá 0</th><th class="numeric">Doanh số trước giảm</th></tr></thead><tbody id="revenueProductBody"></tbody></table></div></section>
+                    <details class="card quality-notes" open><summary>Phạm vi dữ liệu & lưu ý khi đọc báo cáo</summary><ul id="revenueNotes"></ul></details>
+                </div>
+            </section>
+            <section id="tab-products" class="tab-panel" hidden aria-label="Sản phẩm và tồn kho">
+                <div class="stats-grid" id="inventoryKpis"></div>
+                <section class="card"><div class="card-heading"><div><h2>Danh mục sản phẩm</h2><p class="muted">Tồn kho hiện tại; ngưỡng cảnh báo mặc định ≤ 10. Sửa giá áp dụng cho lần bán tiếp theo.</p></div><button class="button button-secondary" id="addCategory">Thêm danh mục</button></div><div class="orders-toolbar"><label class="search-field"><input id="productSearch" type="search" placeholder="Tên, mã vạch, mã sản phẩm…" aria-label="Tìm sản phẩm"></label><label class="payment-filter">Tồn kho<select id="stockFilter"><option value="active">Đang bán</option><option value="">Tất cả (gồm hàng lịch sử)</option><option value="low">Còn ≤ 10</option><option value="out">Hết hàng</option><option value="inactive">Ngừng bán</option></select></label><label class="payment-filter">Nhóm hàng<select id="productCategory"><option value="">Tất cả nhóm</option></select></label><span id="productCount" class="result-count"></span></div><div class="table-scroll"><table><thead><tr><th>Sản phẩm</th><th>Danh mục</th><th class="numeric">Giá bán</th><th class="numeric">Giá vốn hiện tại</th><th class="numeric">Tồn</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="productBody"></tbody></table></div><div class="card-footer"><span id="productPageInfo"></span><div class="pagination"><button class="button button-secondary button-small" id="productPrevious">Trước</button><button class="button button-secondary button-small" id="productNext">Sau</button></div></div></section>
+            </section>
+            <section id="tab-customers" class="tab-panel" hidden aria-label="Khách hàng">
+                <section class="card"><div class="card-heading"><div><h2>Khách hàng & lịch sử ghi nhận</h2><p class="muted">Tìm theo mã khách (KH…), tên hoặc số điện thoại. Số đơn và doanh thu tính trực tiếp từ hóa đơn.</p></div></div><div class="orders-toolbar"><label class="search-field"><input id="customerSearch" type="search" placeholder="Tên, số điện thoại, mã khách…" aria-label="Tìm khách hàng"></label><label class="payment-filter">Nhóm<select id="customerSegment"><option value="">Tất cả nhóm</option></select></label><span class="result-count" id="customerCount"></span></div><div class="table-scroll"><table><thead><tr><th>Khách hàng</th><th>Điện thoại</th><th>Nhóm</th><th class="numeric">Số hóa đơn</th><th class="numeric">Doanh thu từ hóa đơn</th><th>Mua lần đầu</th><th>Lần mua cuối</th></tr></thead><tbody id="customerBody"></tbody></table></div><div class="card-footer"><span id="customerPageInfo"></span><div class="pagination"><button class="button button-secondary button-small" id="customerPrevious">Trước</button><button class="button button-secondary button-small" id="customerNext">Sau</button></div></div></section>
+            </section>
+            <section id="tab-shifts" class="tab-panel" hidden aria-label="Ca làm việc">
+                <section class="card"><div class="card-heading"><div><h2>Ca làm việc của nhân viên</h2><p class="muted">Mỗi hóa đơn tại quầy thuộc ca của người bán. Bấm một ca để xem báo cáo, xuất doanh thu hoặc quà tặng.</p></div></div>
+                    <div class="orders-toolbar"><label class="payment-filter">Từ ngày<input type="date" id="shiftFrom"></label><label class="payment-filter">Đến ngày<input type="date" id="shiftTo"></label><label class="payment-filter">Nhân viên<select id="shiftCashier"><option value="">Tất cả</option></select></label><span class="result-count" id="shiftCount"></span></div>
+                    <div class="table-scroll"><table><thead><tr><th>Ca</th><th>Nhân viên</th><th>Mở ca</th><th>Kết ca</th><th class="numeric">Hóa đơn</th><th class="numeric">Doanh thu</th><th class="numeric">Tiền mặt thu</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="shiftBody"></tbody></table></div>
+                </section>
+            </section>
+            <section id="tab-users" class="tab-panel" hidden aria-label="Tài khoản và phân quyền">
+                <section class="card workspace-card"><div class="card-heading"><h2>Phạm vi của từng vai trò</h2></div><div class="table-scroll"><table><thead><tr><th>Chức năng</th><th>Quản trị viên</th><th>Quản lý</th><th>Thu ngân</th></tr></thead><tbody><tr><td>Bán hàng, tra cứu và đăng ký khách</td><td>Có</td><td>Có</td><td>Có</td></tr><tr><td>Doanh thu, hóa đơn, khách hàng, tồn kho</td><td>Có</td><td>Có</td><td>Không</td></tr><tr><td>Sửa sản phẩm, ưu đãi, áp dụng phân cụm AI</td><td>Có</td><td>Có</td><td>Không</td></tr><tr><td>Tạo tài khoản, đổi quyền, khóa, đặt mật khẩu</td><td>Có</td><td>Không</td><td>Không</td></tr></tbody></table></div></section>
+                <section class="card"><div class="card-heading"><div><h2>Tài khoản cửa hàng</h2><p class="muted">Khóa và đổi quyền có hiệu lực ở yêu cầu tiếp theo. Đổi mật khẩu sẽ kết thúc các phiên cũ. Không thể tự khóa hoặc hạ quyền.</p></div><button class="button button-primary" id="addUser">Tạo tài khoản</button></div><div class="table-scroll"><table><thead><tr><th>Tên đăng nhập</th><th>Họ tên</th><th>Vai trò</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="userBody"></tbody></table></div></section>
+            </section>
+            <footer class="page-footer"><span>Cosmetic POS · Quản trị cửa hàng</span><span>Số liệu theo dữ liệu đã lưu và kết quả phân tích của dịch vụ AI.</span></footer>
+        </div>
+    </main>
+
+    <button class="ai-fab" id="chatToggle" aria-label="Mở trợ lý phân tích" aria-controls="chatDrawer" aria-expanded="false"><svg class="icon"><use href="#i-spark"/></svg>Trợ lý phân tích<span id="chatKBadge">K = —</span></button>
+    <section class="ai-chat-drawer" id="chatDrawer" aria-label="Trợ lý phân tích AI" hidden><div class="drawer-header"><div class="drawer-heading"><span class="assistant-mark"><svg class="icon"><use href="#i-spark"/></svg></span><div><h2>Trợ lý phân tích</h2><p id="chatKTitle">Dựa trên phân cụm bạn đang xem</p></div></div><button class="icon-button" id="chatClose" aria-label="Đóng trợ lý"><svg class="icon"><use href="#i-close"/></svg></button></div><div class="chat-body" id="chatWindow" role="log" aria-live="polite"><div class="chat-msg ai"><span class="chat-avatar">AI</span><div class="chat-bubble">Tôi có thể giúp bạn giải thích phân khúc khách hàng và đề xuất chiến lược. Mọi đề xuất đều cần bạn xem lại trước khi lưu.</div></div></div><div class="quick-prompts"><button data-prompt="Phân tích các nhóm khách hàng đang xem">Phân tích khách hàng</button><button data-prompt="Đề xuất cách giữ chân khách hàng dựa trên dữ liệu hiện tại">Giữ chân khách hàng</button></div><form class="chat-input-area" id="chatForm"><input type="text" id="chatInput" placeholder="Hỏi về dữ liệu khách hàng…" aria-label="Câu hỏi cho trợ lý" maxlength="2000" required><button class="button button-primary" id="sendChatButton" type="submit" aria-label="Gửi câu hỏi"><svg class="icon"><use href="#i-send"/></svg></button></form><p class="chat-disclaimer">Đề xuất AI chưa phải ưu đãi đã được lưu.</p></section>
+    <dialog id="confirmDialog" class="confirm-dialog" aria-labelledby="confirmTitle"><div class="dialog-mark"><svg class="icon"><use href="#i-info"/></svg></div><h2 id="confirmTitle">Xác nhận thay đổi</h2><p id="confirmDescription"></p><div class="dialog-actions"><button class="button button-secondary" id="confirmCancel">Quay lại</button><button class="button button-primary" id="confirmAccept">Xác nhận</button></div></dialog>
+    <div id="toastRegion" class="toast-region" role="status" aria-live="polite"></div>
+    <dialog id="workspaceDialog" class="workspace-dialog" aria-labelledby="workspaceDialogTitle"><div class="workspace-dialog-top"><h2 id="workspaceDialogTitle"></h2><button type="button" class="button button-secondary button-small" id="closeWorkspaceDialog">Đóng</button></div><div id="workspaceDialogBody"></div></dialog>
+</body>
+</html>

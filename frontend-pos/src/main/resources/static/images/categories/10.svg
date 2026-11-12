@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360" role="img" aria-labelledby="title desc">
+<title id="title">Cạo râu &amp; tẩy lông</title><desc id="desc">Dao cạo xanh trầm với lưỡi kim loại và tuýp kem cạo râu màu ngà. Hình minh họa nhóm hàng, không mô tả bao bì của sản phẩm cụ thể.</desc>
+<defs>
+  <linearGradient id="back" x2=".8" y2="1"><stop stop-color="#f6f5ef"/><stop offset="1" stop-color="#e4eadc"/></linearGradient>
+  <linearGradient id="arch" x2="1" y2="1"><stop stop-color="#d6dfcd" stop-opacity=".7"/><stop offset="1" stop-color="#f6f5ef" stop-opacity=".2"/></linearGradient>
+  <linearGradient id="sage"><stop stop-color="#718c75"/><stop offset=".24" stop-color="#a6b59a"/><stop offset=".58" stop-color="#8fa585"/><stop offset="1" stop-color="#566e58"/></linearGradient>
+  <linearGradient id="dark"><stop stop-color="#304c3e"/><stop offset=".35" stop-color="#607c65"/><stop offset="1" stop-color="#2f4b3c"/></linearGradient>
+  <linearGradient id="ivory"><stop stop-color="#ded9c8"/><stop offset=".28" stop-color="#fffdf4"/><stop offset=".7" stop-color="#efebdd"/><stop offset="1" stop-color="#d4d0bc"/></linearGradient>
+  <linearGradient id="rose"><stop stop-color="#b47c73"/><stop offset=".3" stop-color="#dfb1a1"/><stop offset=".7" stop-color="#cb998c"/><stop offset="1" stop-color="#a66d66"/></linearGradient>
+  <linearGradient id="gold"><stop stop-color="#a88e5c"/><stop offset=".32" stop-color="#e4d2a7"/><stop offset=".6" stop-color="#cfb57d"/><stop offset="1" stop-color="#a48b5a"/></linearGradient>
+  <linearGradient id="amber"><stop stop-color="#9f713b" stop-opacity=".85"/><stop offset=".35" stop-color="#dfba79" stop-opacity=".7"/><stop offset="1" stop-color="#b1864e" stop-opacity=".9"/></linearGradient>
+  <linearGradient id="silver"><stop stop-color="#b6beb3"/><stop offset=".3" stop-color="#f2f3e9"/><stop offset=".7" stop-color="#d8ddd1"/><stop offset="1" stop-color="#9ba79c"/></linearGradient>
+  <linearGradient id="glass"><stop stop-color="#fff" stop-opacity=".65"/><stop offset=".45" stop-color="#f6f4e5" stop-opacity=".15"/><stop offset="1" stop-color="#a0ad95" stop-opacity=".6"/></linearGradient>
+  <radialGradient id="halo"><stop stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <filter id="blur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="5"/></filter>
+</defs>
+<path fill="url(#back)" d="M0 0h480v360H0z"/>
+<ellipse cx="151" cy="95" rx="210" ry="190" fill="url(#halo)" />
+<path d="M132 280V154a108 108 0 0 1 216 0v126Z" fill="url(#arch)"/>
+<path d="M0 292q240-14 480 0v68H0Z" fill="#f6f5ef" fill-opacity=".6"/>
+<g fill="none" stroke="#7c8b71" stroke-width="1.2" opacity=".3" stroke-linecap="round">
+  <path d="M380 290q-4-71 29-132"/>
+  <path d="M386 256q-30-7-29-31 24 5 29 31Zm5-28q23-7 28-28-26 2-28 28Zm6-28q-19-12-15-29 19 8 15 29Zm9-27q20-4 22-24-18 4-22 24Z"/>
+</g>
+<ellipse cx="238" cy="316" rx="150" ry="7" fill="#455343" opacity=".15" filter="url(#blur)"/>
+<path d="M91 289h298v20c0 13-67 24-149 24S91 322 91 309Z" fill="#d8d7c7"/>
+<ellipse cx="240" cy="289" rx="149" ry="22" fill="#f4f1e6" /><ellipse cx="240" cy="288" rx="149" ry="21" fill="#fff" opacity=".25"/>
+<ellipse cx="280" cy="300" rx="51" ry="7" fill="#455343" opacity=".15" filter="url(#blur)"/><g>
+  <path d="M246 125H329L321 269Q320 278 314 278H261Q255 278 254 269Z" fill="url(#ivory)" stroke="#8b8d72" stroke-opacity=".22"/>
+  <path d="M250 132L325 132" stroke="#9b9d84" stroke-width="1" opacity=".3"/><rect x="256" y="140" width="4" height="119" rx="2" fill="#fff" opacity=".32"/>
+  <rect x="262.6" y="173.72" width="49.8" height="62.64" rx="2" fill="#f9f7ef" fill-opacity=".94"/>
+  <path d="M287.5 183.72c-10-7-15-2-11 4 3 4 9 4 11 9 0-7 12-7 11-15-6 0-10 3-11 9" fill="none" stroke="#657c69" stroke-width="1.2" stroke-linecap="round"/>
+  <rect x="274.552" y="218.36" width="25.896" height="1.5" rx="0.75" fill="#657c69" opacity=".65"/><rect x="279.53200000000004" y="224.36" width="15.936" height="1" rx="0.5" fill="#657c69" opacity=".35"/><rect x="257" y="275" width="61" height="24" rx="5" fill="url(#sage)" /><path d="M261 282L314 282" stroke="#fff" stroke-width="1" opacity=".16"/>
+</g><g transform="rotate(12 188 210)"><ellipse cx="192" cy="301" rx="34" ry="7" fill="#455343" opacity=".15" filter="url(#blur)"/><path d="M178 158h26l-3 46-3 84q0 11-10 11t-10-11l-3-84Z" fill="url(#dark)"/><rect x="181" y="214" width="14" height="65" rx="7" fill="url(#sage)" /><rect x="181" y="153" width="20" height="29" rx="5" fill="url(#gold)" /><rect x="142" y="114" width="99" height="49" rx="11" fill="url(#silver)" /><rect x="149" y="121" width="85" height="33" rx="5" fill="#52675b" /><path d="M154 128h74m-74 7h74m-74 7h74m-74 7h74" stroke="#d6e0d1" stroke-width="2"/><rect x="156" y="113" width="72" height="4" rx="2" fill="#bbccb3" /></g>
+</svg>

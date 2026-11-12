@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#2f6b4f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Thẻ thành viên">
+    <meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Thẻ thành viên | Cosmetic</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/favicon.svg">
+    <link rel="manifest" href="/member/manifest.json">
+    <link rel="stylesheet" href="/css/member.css">
+    <script defer src="/js/vendor/qrcode-generator-1.4.4.js"></script>
+    <script defer src="/js/qr-svg.js"></script>
+    <script defer src="/js/member.js"></script>
+</head>
+<body>
+<main class="member-app">
+    <header class="member-header">
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <div><strong>COSMETIC</strong><small>Thẻ thành viên</small></div>
+    </header>
+
+    <p class="page-state" id="pageState" role="status">Đang mở thẻ…</p>
+
+    <!-- Đăng nhập / đăng ký / kích hoạt -->
+    <section id="authView" class="panel" hidden>
+        <div class="tabs" role="tablist" aria-label="Chọn cách vào thẻ">
+            <button type="button" role="tab" class="tab" data-tab="login" aria-selected="true">Đăng nhập</button>
+            <button type="button" role="tab" class="tab" data-tab="register" aria-selected="false">Đăng ký</button>
+            <button type="button" role="tab" class="tab" data-tab="activate" aria-selected="false">Kích hoạt thẻ</button>
+        </div>
+
+        <form id="loginForm" class="auth-form" data-form="login" novalidate>
+            <h1>Mở thẻ thành viên</h1>
+            <label>Số điện thoại<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" required></label>
+            <label>PIN 6 số<input name="pin" type="password" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="current-password" required></label>
+            <button type="submit" class="primary">Mở thẻ</button>
+            <p class="hint">Quên PIN? Nhờ thu ngân cấp <strong>mã kích hoạt</strong> rồi chọn thẻ “Kích hoạt thẻ” để đặt PIN mới.</p>
+        </form>
+
+        <form id="registerForm" class="auth-form" data-form="register" novalidate hidden>
+            <h1>Đăng ký thành viên</h1>
+            <p class="hint">Đăng ký xong bạn có ngay thẻ có mã QR để tích điểm mỗi lần mua tại cửa hàng.</p>
+            <label>Họ và tên<input name="fullName" type="text" autocomplete="name" maxlength="100" required></label>
+            <label>Số điện thoại<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" required></label>
+            <label>Đặt PIN 6 số<input name="pin" type="password" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="new-password" required></label>
+            <label>Nhập lại PIN<input name="pin2" type="password" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="new-password" required></label>
+            <button type="submit" class="primary">Đăng ký và nhận thẻ</button>
+            <p class="hint">PIN dùng để mở thẻ lần sau. Không dùng PIN dễ đoán như 123456 hay 111111.</p>
+        </form>
+
+        <form id="activateForm" class="auth-form" data-form="activate" novalidate hidden>
+            <h1>Kích hoạt thẻ</h1>
+            <p class="hint">Dành cho khách <strong>đã mua ở cửa hàng</strong> nhưng chưa có thẻ, hoặc <strong>quên PIN</strong>. Nhờ thu ngân cấp mã kích hoạt 6 số (hiệu lực 10 phút).</p>
+            <label>Số điện thoại đã đăng ký ở cửa hàng<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" required></label>
+            <label>Mã kích hoạt từ thu ngân<input name="code" type="text" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="one-time-code" required></label>
+            <label>Đặt PIN 6 số<input name="pin" type="password" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="new-password" required></label>
+            <label>Nhập lại PIN<input name="pin2" type="password" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="new-password" required></label>
+            <button type="submit" class="primary">Kích hoạt</button>
+        </form>
+        <p class="form-message" id="authMessage" role="alert" hidden></p>
+    </section>
+
+    <!-- Thẻ thành viên -->
+    <section id="cardView" hidden>
+        <article class="member-card">
+            <div class="card-top"><span>THẺ THÀNH VIÊN</span><span class="card-brand">COSMETIC</span></div>
+            <strong class="card-name" id="cardName">—</strong>
+            <div class="card-meta"><span id="cardCode">—</span><span id="cardPhone"></span></div>
+            <div class="card-since" id="cardSince"></div>
+        </article>
+
+        <section class="panel qr-panel" aria-labelledby="qrTitle">
+            <h2 id="qrTitle">Đưa mã này cho thu ngân quét</h2>
+            <div class="qr-box" id="qrBox" aria-label="Mã QR thẻ thành viên"><span class="qr-wait">Đang tạo mã…</span></div>
+            <div class="qr-timer" aria-hidden="true"><span id="qrTimerBar"></span></div>
+            <p class="qr-note" id="qrNote" role="status">Mã tự đổi mỗi 60 giây để người khác không dùng được ảnh chụp.</p>
+        </section>
+
+        <section class="panel points-panel">
+            <div><small>Điểm tích lũy</small><strong id="pointsValue">0</strong></div>
+            <p id="pointsRule">1 điểm cho mỗi 10.000 đ thanh toán</p>
+        </section>
+
+        <section class="panel offer-panel" id="offerPanel">
+            <h2>Ưu đãi của bạn</h2>
+            <div id="offerBody"></div>
+        </section>
+
+        <section class="panel">
+            <h2>Lịch sử mua hàng</h2>
+            <ul class="history" id="orderList"></ul>
+        </section>
+
+        <section class="panel">
+            <h2>Lịch sử điểm</h2>
+            <ul class="history" id="pointList"></ul>
+        </section>
+
+        <button type="button" class="secondary logout" id="logoutButton">Đăng xuất</button>
+        <p class="footnote">Mẹo: chọn “Thêm vào màn hình chính” trong trình duyệt để mở thẻ nhanh như một ứng dụng.</p>
+    </section>
+</main>
+</body>
+</html>
