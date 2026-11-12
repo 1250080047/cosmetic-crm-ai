@@ -36,7 +36,8 @@ Thumbs.db
 .claude/settings.local.json
 .github/modernize/
 
-# OnlineSales raw file and generated CSVs are not uploaded
-# (put OnlineSales.xlsx in data/raw, then rebuild with data/prepare_dataset.py)
-data/raw/
+# Raw data: only OnlineSales.xlsx is uploaded (repo is private).
+# Generated CSVs are not: rebuild them with data/prepare_dataset.py
+data/raw/*
+!data/raw/OnlineSales.xlsx
 data/processed/
