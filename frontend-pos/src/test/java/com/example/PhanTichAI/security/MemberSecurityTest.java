@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** The member page is public, its changes need CSRF, and a signed-in customer never reaches staff pages. */
 @WebMvcTest(controllers = MemberController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, MemberRateLimiter.class})
 class MemberSecurityTest {
     @Autowired MockMvc mvc;
     @MockBean AccountService accounts;
@@ -69,6 +69,18 @@ class MemberSecurityTest {
         mvc.perform(get("/api/pos/customer-lookup?q=KH24694").session(session)).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/admin/ai/model-status").session(session)).andExpect(status().isUnauthorized());
         mvc.perform(get("/pos").session(session)).andExpect(status().is4xxClientError());
+    }
+
+    @Test void oneDeviceCannotKeepGuessingActivationCodes() throws Exception {
+        when(members.activate(any(), any(), any())).thenThrow(new MemberService.MemberException(400, "Mã kích hoạt chưa đúng."));
+        for (int i = 0; i < 10; i++)
+            mvc.perform(post("/api/member/activate").with(csrf()).with(request -> { request.setRemoteAddr("203.0.113.99"); return request; })
+                            .contentType("application/json").content("{\"phone\":\"0912345678\",\"code\":\"111111\",\"pin\":\"135790\"}"))
+                    .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/member/activate").with(csrf()).with(request -> { request.setRemoteAddr("203.0.113.99"); return request; })
+                        .contentType("application/json").content("{\"phone\":\"0912345678\",\"code\":\"111111\",\"pin\":\"135790\"}"))
+                .andExpect(status().isTooManyRequests()).andExpect(jsonPath("$.success").value(false));
+        verify(members, times(10)).activate(any(), any(), any());
     }
 
     @Test void wrongPinMessageComesBackToThePage() throws Exception {

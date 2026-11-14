@@ -2,6 +2,9 @@ package com.example.PhanTichAI.controller;
 
 import com.example.PhanTichAI.entity.Customer;
 import com.example.PhanTichAI.repository.CustomerRepository;
+import com.example.PhanTichAI.security.MemberRateLimiter;
+import com.example.PhanTichAI.security.MemberRateLimiter.Action;
+import com.example.PhanTichAI.security.PublicMemberGateway;
 import com.example.PhanTichAI.service.MemberQrService;
 import com.example.PhanTichAI.service.MemberService;
 import com.example.PhanTichAI.service.MemberService.MemberException;
@@ -26,9 +29,10 @@ public class MemberController {
     private final MemberService members;
     private final MemberQrService qr;
     private final CustomerRepository customers;
+    private final MemberRateLimiter limiter;
 
-    public MemberController(MemberService members, MemberQrService qr, CustomerRepository customers) {
-        this.members = members; this.qr = qr; this.customers = customers;
+    public MemberController(MemberService members, MemberQrService qr, CustomerRepository customers, MemberRateLimiter limiter) {
+        this.members = members; this.qr = qr; this.customers = customers; this.limiter = limiter;
     }
 
     public record RegisterRequest(String fullName, String phone, String pin) {}
@@ -40,6 +44,7 @@ public class MemberController {
 
     @PostMapping("/api/member/register") @ResponseBody
     public Map<String, Object> register(@RequestBody RegisterRequest body, HttpServletRequest request) {
+        slowDown(Action.REGISTER, request);
         try {
             return signIn(request, members.register(body.fullName(), body.phone(), body.pin()), "Chào mừng bạn! Thẻ thành viên đã sẵn sàng.");
         } catch (DataIntegrityViolationException duplicate) {
@@ -49,11 +54,13 @@ public class MemberController {
 
     @PostMapping("/api/member/login") @ResponseBody
     public Map<String, Object> login(@RequestBody LoginRequest body, HttpServletRequest request) {
+        slowDown(Action.LOGIN, request);
         return signIn(request, members.login(body.phone(), body.pin()), "Đăng nhập thành công.");
     }
 
     @PostMapping("/api/member/activate") @ResponseBody
     public Map<String, Object> activate(@RequestBody ActivateRequest body, HttpServletRequest request) {
+        slowDown(Action.ACTIVATE, request);
         return signIn(request, members.activate(body.phone(), body.code(), body.pin()), "Đã kích hoạt thẻ và lưu PIN mới.");
     }
 
@@ -79,6 +86,11 @@ public class MemberController {
     @ExceptionHandler(MemberException.class)
     public ResponseEntity<Map<String, Object>> refused(MemberException error) {
         return ResponseEntity.status(error.status()).body(Map.of("success", false, "message", error.getMessage()));
+    }
+
+    private void slowDown(Action action, HttpServletRequest request) {
+        if (!limiter.tryAcquire(action, PublicMemberGateway.clientAddress(request)))
+            throw new MemberException(429, "Bạn đã thử quá nhiều lần. Hãy đợi ít phút rồi thử lại.");
     }
 
     private static int member(HttpSession session) {

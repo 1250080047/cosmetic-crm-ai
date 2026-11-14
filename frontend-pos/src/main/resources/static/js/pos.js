@@ -329,7 +329,10 @@
     }
 
     // ---- Member card: QR to open the member page, one-time activation code ----------------------
-    let memberLink = null;
+    const MEMBER_SCOPE = {
+        internet: '🌐 Khách dùng 4G hay Wi-Fi nào cũng mở được (qua đường hầm Cloudflare).',
+        wifi: '📶 Chỉ điện thoại dùng chung Wi-Fi với máy này mới mở được. Muốn khách dùng mạng nào cũng mở được: chạy scripts\\public-member.cmd rồi mở lại hộp này.'
+    };
     async function openMemberModal(issued = null) {
         $('activationBox').hidden = !issued;
         if (issued) {
@@ -340,13 +343,14 @@
         }
         $('memberModal').style.display = 'flex';
         try {
-            memberLink = memberLink || await request('/api/pos/member-link');
+            const memberLink = await request('/api/pos/member-link');   // asked every time: the tunnel may have started meanwhile
             $('memberQr').replaceChildren(window.QrSvg.render(memberLink.url));
             $('memberUrl').textContent = memberLink.url;
+            $('memberScope').textContent = MEMBER_SCOPE[memberLink.scope] || '';
             $('memberWarning').hidden = memberLink.reachable_from_phones;
             $('memberWarning').textContent = memberLink.reachable_from_phones ? '' :
-                'Máy tính chưa kết nối Wi-Fi/mạng nội bộ nên điện thoại chưa mở được địa chỉ này. Hãy cho máy tính và điện thoại dùng chung một Wi-Fi.';
-            if (memberLink.alternatives?.length) $('memberUrl').textContent += ' (hoặc ' + memberLink.alternatives.join(', ') + ')';
+                'Máy tính chưa kết nối Wi-Fi/mạng nội bộ nên điện thoại chưa mở được địa chỉ này. Hãy cho máy tính và điện thoại dùng chung một Wi-Fi, hoặc chạy scripts\\public-member.cmd.';
+            if (memberLink.alternatives?.length) $('memberUrl').textContent += ' (cùng Wi-Fi: ' + memberLink.alternatives.join(', ') + ')';
         } catch (error) {
             $('memberQr').replaceChildren(node('p', 'member-warning', 'Chưa tạo được mã QR: ' + error.message));
         }

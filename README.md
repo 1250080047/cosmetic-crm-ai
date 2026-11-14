@@ -175,9 +175,21 @@ quà là sản phẩm đang bán còn kho, không nói về lợi nhuận khi ch
 
 ## Thẻ thành viên & tích điểm (trang cho khách)
 
-Khách mở **`http://<địa chỉ máy tính>:8080/member`** trên điện thoại. Ở quầy, nút **📱 Thẻ thành viên** hiện sẵn mã QR của địa chỉ
-này (máy tự tìm địa chỉ Wi-Fi, VD `http://192.168.100.215:8080/member`) để khách quét bằng camera điện thoại. Điện thoại và máy
-tính phải dùng chung một Wi-Fi. Có thể đặt cố định bằng `member.public-url` trong `application.properties`.
+Khách mở trang **`/member`** trên điện thoại. Ở quầy, nút **📱 Thẻ thành viên** hiện sẵn mã QR của địa chỉ phù hợp nhất để khách
+quét bằng camera điện thoại:
+
+| Cách | Khách dùng mạng nào | Làm gì |
+|---|---|---|
+| **Qua Internet** (đường hầm Cloudflare, miễn phí) | 4G, Wi-Fi bất kỳ | Bấm đúp [scripts/public-member.cmd](scripts/public-member.cmd) (cần cài một lần: `winget install --id Cloudflare.cloudflared -e`), giữ cửa sổ mở. Địa chỉ dạng `https://….trycloudflare.com/member`, **đổi mỗi lần bật** |
+| Chung Wi-Fi | cùng Wi-Fi với máy tính | Không cần làm gì; máy tự tìm địa chỉ Wi-Fi, VD `http://192.168.1.42:8080/member` |
+| Địa chỉ cố định | 4G, Wi-Fi bất kỳ | Có tên miền (VD `.id.vn`) + Cloudflare Tunnel có tên → đặt `member.public-url` trong `application.properties` |
+
+**An toàn khi mở ra Internet** ([PublicMemberGateway](frontend-pos/src/main/java/com/example/PhanTichAI/security/PublicMemberGateway.java)):
+đường hầm chỉ nối vào **cổng 8081**, cổng này chỉ nhận kết nối từ chính máy tính (127.0.0.1) và **chỉ mở trang thẻ khách**
+(`/member`, `/api/member/**` và 5 file giao diện của trang). POS, trang quản trị, đăng nhập nhân viên đều trả "không tìm thấy" (404),
+nên tài khoản demo không lộ ra ngoài. Mỗi thiết bị chỉ được đăng ký 5 lần/giờ, đăng nhập 20 lần/10 phút, kích hoạt 10 lần/10 phút
+([MemberRateLimiter](frontend-pos/src/main/java/com/example/PhanTichAI/security/MemberRateLimiter.java)). Giới hạn của đường hầm miễn phí:
+tối đa 200 truy cập cùng lúc, chỉ dùng để thử nghiệm/demo; laptop tắt thì khách không mở được thẻ.
 
 | Việc | Cách làm |
 |---|---|

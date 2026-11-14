@@ -78,6 +78,9 @@ Tài khoản tạo thêm trên giao diện vẫn cần mật khẩu từ 10 ký 
 
 - Trang khách `/member` (mở trên điện thoại): đăng ký, đăng nhập bằng SĐT + PIN 6 số, kích hoạt thẻ bằng mã của thu ngân.
   Chuỗi bảo mật riêng (`SecurityConfig.memberSecurity`): mọi thao tác ghi cần CSRF; phiên khách chỉ giữ mã khách, không có quyền nhân viên.
+- **Khách dùng mạng khác (4G):** chạy `scripts/public-member.cmd` (Cloudflare Quick Tunnel → cổng 8081). Cổng 8081 chỉ nghe trên
+  127.0.0.1 và `PublicMemberGateway` chỉ cho qua trang thẻ khách; mọi đường dẫn khác trả 404. Địa chỉ thật của điện thoại lấy từ
+  header `CF-Connecting-IP` (chỉ tin trên cổng 8081) để giới hạn số lần đăng ký/đăng nhập/kích hoạt. Tắt hẳn: `member.public-port=-1`.
 - **Cấp mã kích hoạt** (POS, mọi vai trò đứng quầy): mã 6 số, hiệu lực 10 phút, dùng một lần; nhập sai 5 lần thì mã bị hủy.
   Dùng cho khách đã có trong hệ thống (khách dữ liệu nền, khách đăng ký tại quầy) và khi khách quên PIN.
 - Đăng nhập sai PIN 5 lần: khóa 15 phút (hoặc cấp mã kích hoạt để đặt lại PIN). Tin báo lỗi không cho biết số điện thoại có tồn tại hay không.

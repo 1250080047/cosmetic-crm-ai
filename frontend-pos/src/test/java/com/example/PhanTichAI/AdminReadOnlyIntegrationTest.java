@@ -25,7 +25,8 @@ import static org.mockito.Mockito.*;
  * Authentication is mocked only in this test context; it never creates SQL accounts. */
 @EnabledIfEnvironmentVariable(named="POS_READ_ONLY_QA", matches="1")
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT, properties={
-    "spring.jpa.hibernate.ddl-auto=none", "spring.jpa.show-sql=false", "logging.level.root=WARN", "debug=false"
+    "spring.jpa.hibernate.ddl-auto=none", "spring.jpa.show-sql=false", "logging.level.root=WARN", "debug=false",
+    "member.public-port=-1"
 })
 class AdminReadOnlyIntegrationTest {
     @LocalServerPort int port;

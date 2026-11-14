@@ -156,7 +156,8 @@ public class PosApiController {
     @GetMapping("/member-link")
     public Map<String, Object> memberLink(HttpServletRequest request) {
         MemberLinkService.Link link = memberLinks.link(request);
-        return Map.of("url", link.url(), "alternatives", link.alternatives(), "reachable_from_phones", link.reachableFromPhones());
+        return Map.of("url", link.url(), "alternatives", link.alternatives(), "reachable_from_phones", link.reachableFromPhones(),
+                "scope", link.scope());
     }
 
     public static class CreateCustomerRequest {
