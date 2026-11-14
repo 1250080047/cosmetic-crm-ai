@@ -11,7 +11,9 @@ và ca làm việc. Gồm Spring Boot (giao diện, nghiệp vụ, SQL Server) v
 Tệp `data/raw/OnlineSales.xlsx` (250.000 dòng, 03/01/2020 → 11/01/2021). Cột: TransactionNo, CustomerID, Quantity,
 UnitPrice (USD), Revenue, TransactionDate, Product Description.
 
-> **Cần bổ sung nguồn gốc** (trang tải, tác giả, ngày tải, giấy phép) trong báo cáo đồ án.
+**Nguồn:** bộ dữ liệu thực hành đi kèm sách *Essentials of Marketing Analytics* — Joseph F. Hair Jr., Dana E. Harrison,
+Haya Ajjan, McGraw Hill (ấn bản 2021, ISBN 9781260597745; có bản phát hành 2024). Khi viết báo cáo, ghi rõ ấn bản và chương/trang
+có bộ dữ liệu. Sách thuộc bản quyền của nhà xuất bản: kho này để riêng tư; trước khi công khai, kiểm tra điều khoản dùng lại dữ liệu.
 
 `python data/prepare_dataset.py` làm sạch và ghi các bước, số dòng vào `data/processed/data_report.md`:
 
