@@ -23,7 +23,7 @@ CREATE TABLE stock_lots (
     quantity_received INT NOT NULL,
     quantity_remaining INT NOT NULL CONSTRAINT ck_lots_remaining CHECK (quantity_remaining >= 0),
     unit_cost NUMERIC(12,2) NULL,
-    is_demo BIT NOT NULL DEFAULT 0,                         -- 1: hạn dùng GIẢ LẬP để minh họa (lô tồn đầu kỳ)
+    is_demo BIT NOT NULL DEFAULT 0,                         -- 1: lô tồn đầu kỳ, hạn dùng gán tự động (dữ liệu nền không có)
     received_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     disposed_quantity INT NOT NULL DEFAULT 0,               -- số lượng đã xuất hủy (hết hạn, hư hỏng)
     disposed_at DATETIME2 NULL,
@@ -45,19 +45,13 @@ CREATE TABLE order_item_lots (
 );
 GO
 
--- Lô tồn đầu kỳ cho hàng đang có. HẠN DÙNG LÀ GIẢ LẬP (is_demo = 1, số lô DK-…) vì dữ liệu nền không có hạn dùng:
--- phần lớn còn 4–24 tháng, khoảng 1/23 sản phẩm sắp hết hạn (12–51 ngày) và vài sản phẩm có 5 hộp đã hết hạn
--- (lô DK-…-HH) để minh họa cảnh báo. Nhập hàng thật sau này ghi hạn dùng thật.
+-- Lô tồn đầu kỳ (số lô DK-<mã SP>, is_demo = 1) cho hàng đang có. Dữ liệu nền không có hạn dùng nên hạn dùng được GÁN
+-- TỰ ĐỘNG; migration 007 đặt hạn còn 5–29 tháng, ngày nhận 01/08/2026 và giá nhập = giá gốc. Hàng nhập qua phiếu nhập
+-- ghi hạn dùng thật.
 INSERT INTO stock_lots(product_id, receipt_id, lot_no, expiry_date, quantity_received, quantity_remaining, unit_cost, is_demo, received_at)
-SELECT p.id, NULL, v.lot_no, v.expiry_date, v.quantity, v.quantity, p.cost_price, 1, SYSDATETIME()
+SELECT p.id, NULL, 'DK-' + COALESCE(p.barcode, CAST(p.id AS VARCHAR(20))),
+       DATEADD(day, 150 + (p.id * 37) % 720, CAST(SYSDATETIME() AS DATE)), p.stock_quantity, p.stock_quantity, p.cost_price, 1, SYSDATETIME()
 FROM products p
-CROSS APPLY (SELECT CASE WHEN p.id % 47 = 0 AND p.stock_quantity >= 10 THEN 5 ELSE 0 END AS expired_part,
-                    'DK-' + COALESCE(p.barcode, CAST(p.id AS VARCHAR(20))) AS code) d
-CROSS APPLY (VALUES
-    (d.code, DATEADD(day, CASE WHEN p.id % 23 = 0 THEN 12 + p.id % 40 ELSE 120 + (p.id * 37) % 600 END, CAST(SYSDATETIME() AS DATE)),
-     p.stock_quantity - d.expired_part),
-    (d.code + '-HH', DATEADD(day, -(3 + p.id % 10), CAST(SYSDATETIME() AS DATE)), d.expired_part)
-) v(lot_no, expiry_date, quantity)
-WHERE p.stock_quantity > 0 AND v.quantity > 0
+WHERE p.stock_quantity > 0
   AND NOT EXISTS (SELECT 1 FROM stock_lots l WHERE l.product_id = p.id);
 GO

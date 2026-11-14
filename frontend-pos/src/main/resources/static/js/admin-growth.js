@@ -110,11 +110,7 @@
         if (lot.daysLeft <= 60) return el('span', 'Còn ' + count(lot.daysLeft) + ' ngày', 'growth-badge warn');
         return el('span', 'Còn hạn', 'growth-badge ok');
     }
-    function lotLabel(lot) {
-        const box = el('span', lot.lotNo);
-        if (lot.demo) { const tag = el('span', 'DEMO', 'growth-badge muted'); tag.title = 'Hạn dùng giả lập của lô tồn đầu kỳ'; box.append(' ', tag); }
-        return box;
-    }
+    const lotLabel = (lot) => lot.lotNo;
     const productCell = (row) => { const box = el('div'); box.append(el('strong', row.productName), el('div', row.barcode || ('#' + row.productId), 'muted')); return box; };
     async function loadStock() {
         const [overview, receipts] = await Promise.all([api('/stock/overview'), api('/stock/receipts')]);
@@ -132,8 +128,6 @@
             stat('Sản phẩm sắp hết hàng', count(s.lowStockProducts), 'còn ≤ ' + (rules.low_stock ?? 10) + ' đơn vị còn hạn'),
             Number(s.stockValue) > 0 ? stat('Giá trị tồn kho', money(s.stockValue), 'theo giá nhập của từng lô (lô chưa ghi giá nhập không tính)')
                 : stat('Giá trị tồn kho', '—', 'chưa có lô nào ghi giá nhập; nhập hàng có giá để tính'));
-        $('stockDemoNote').hidden = !Number(s.demoLots);
-        $('stockDemoNote').textContent = 'Có ' + count(s.demoLots) + ' lô tồn đầu kỳ (nhãn DEMO) với hạn dùng GIẢ LẬP để minh họa cảnh báo, vì dữ liệu nền không có hạn dùng. Hàng nhập mới qua phiếu nhập dùng hạn dùng thật.';
         rows('expiryBody', data.expiring || [], [
             { value: productCell }, { value: lotLabel }, { value: (lot) => day(lot.expiryDate) },
             { numeric: true, value: (lot) => count(lot.remaining) }, { value: expiryBadge },
@@ -373,8 +367,40 @@
         finally { button.disabled = false; }
     });
 
+    // ---- Gross profit of counter invoices (on the revenue tab) -----------------------------------
+    const margin = (profit, revenue) => Number(revenue) ? percent(Number(profit) / Number(revenue), 1) : '—';
+    async function loadProfit() {
+        try {
+            const data = await api('/profit');
+            const s = data.summary;
+            $('profitCaption').textContent = s.orders
+                ? count(s.orders) + ' hóa đơn tại quầy từ ' + new Date(s.firstOrder).toLocaleDateString('vi-VN') + ' đến ' + new Date(s.lastOrder).toLocaleDateString('vi-VN') +
+                  '. Giá vốn = giá nhập của đúng lô đã bán (hóa đơn trước khi có lô dùng giá gốc sản phẩm); quà tặng 0 đ vẫn tính giá vốn.' +
+                  (Number(s.linesWithoutCost) ? ' Có ' + count(s.linesWithoutCost) + ' dòng chưa có giá vốn.' : '')
+                : 'Chưa có hóa đơn bán tại quầy.';
+            $('profitStats').replaceChildren(
+                stat('Doanh thu thực thu', money(s.revenue), 'sau ưu đãi và đổi điểm'),
+                stat('Giá vốn hàng bán', money(s.cost), 'theo giá nhập của lô'),
+                stat('Lợi nhuận gộp', money(s.profit), 'doanh thu − giá vốn'),
+                stat('Biên lợi nhuận gộp', margin(s.profit, s.revenue), 'lợi nhuận gộp / doanh thu'));
+            rows('profitMonthBody', data.months || [], [
+                { value: (m) => m.month.slice(5) + '/' + m.month.slice(0, 4) }, { numeric: true, value: (m) => count(m.orders) },
+                { numeric: true, value: (m) => money(m.revenue) }, { numeric: true, value: (m) => money(m.cost) },
+                { numeric: true, value: (m) => money(m.profit) }, { numeric: true, value: (m) => margin(m.profit, m.revenue) }
+            ], 'Chưa có hóa đơn bán tại quầy.');
+            rows('profitProductBody', data.products || [], [
+                { value: (p) => p.productName }, { numeric: true, value: (p) => count(p.quantity) }, { numeric: true, value: (p) => money(p.revenue) },
+                { numeric: true, value: (p) => money(p.cost) }, { numeric: true, value: (p) => money(p.profit) },
+                { numeric: true, value: (p) => margin(p.profit, p.revenue) }
+            ], 'Chưa có dữ liệu.');
+        } catch (error) {
+            $('profitCaption').textContent = 'Chưa đọc được lợi nhuận: ' + error.message;
+            throw error;
+        }
+    }
+
     // ---- Tab wiring -------------------------------------------------------------------------------
-    const loaders = { basket: loadBasket, stock: loadStock, experiments: loadExperiments, reviews: loadReviews };
+    const loaders = { basket: loadBasket, stock: loadStock, experiments: loadExperiments, reviews: loadReviews, revenue: loadProfit };
     const loaded = new Set();
     let current = 'overview';
     async function load(tab, force = false) {

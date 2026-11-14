@@ -240,6 +240,13 @@
                     <section class="card workspace-card"><div class="card-heading"><div><h2>10 sản phẩm có doanh số dòng hàng cao nhất</h2><p class="muted">Doanh số trước giảm giá của hóa đơn. Số lượng bao gồm các dòng giá 0.</p></div></div><div class="table-scroll"><table><thead><tr><th>Sản phẩm</th><th class="numeric">Số lượng</th><th class="numeric">Trong đó giá 0</th><th class="numeric">Doanh số trước giảm</th></tr></thead><tbody id="revenueProductBody"></tbody></table></div></section>
                     <details class="card quality-notes" open><summary>Phạm vi dữ liệu & lưu ý khi đọc báo cáo</summary><ul id="revenueNotes"></ul></details>
                 </div>
+                <section class="card" id="profitCard">
+                    <div class="card-heading"><div><h2>Lợi nhuận gộp — hóa đơn bán tại quầy</h2><p class="muted" id="profitCaption">Doanh thu thực thu trừ giá vốn của đúng lô hàng đã bán (giá nhập của lô; hóa đơn trước khi có lô dùng giá gốc của sản phẩm).</p></div></div>
+                    <div class="stats-grid growth-inner-stats" id="profitStats"></div>
+                    <div class="table-scroll"><table><thead><tr><th>Tháng</th><th class="numeric">Hóa đơn</th><th class="numeric">Doanh thu thực thu</th><th class="numeric">Giá vốn</th><th class="numeric">Lợi nhuận gộp</th><th class="numeric">Biên lợi nhuận</th></tr></thead><tbody id="profitMonthBody"></tbody></table></div>
+                    <h3 class="growth-subheading">10 sản phẩm lãi gộp cao nhất <span class="muted">(theo giá bán, trước giảm giá hóa đơn)</span></h3>
+                    <div class="table-scroll"><table><thead><tr><th>Sản phẩm</th><th class="numeric">Số lượng</th><th class="numeric">Doanh số</th><th class="numeric">Giá vốn</th><th class="numeric">Lãi gộp</th><th class="numeric">Biên</th></tr></thead><tbody id="profitProductBody"></tbody></table></div>
+                </section>
             </section>
             <section id="tab-products" class="tab-panel" hidden aria-label="Sản phẩm và tồn kho">
                 <div class="stats-grid" id="inventoryKpis"></div>
@@ -247,7 +254,6 @@
             </section>
             <section id="tab-stock" class="tab-panel" hidden aria-label="Kho và hạn dùng">
                 <div class="stats-grid" id="stockStats"></div>
-                <p class="growth-warning" id="stockDemoNote" hidden></p>
                 <section class="card">
                     <div class="card-heading"><div><h2>Cảnh báo hạn dùng</h2><p class="muted" id="expiryCaption">Lô còn hạn ≤ 60 ngày hoặc đã hết hạn nhưng chưa xuất hủy. Hàng hết hạn không bán được ở POS.</p></div></div>
                     <div class="table-scroll"><table><thead><tr><th>Sản phẩm</th><th>Lô</th><th>Hạn dùng</th><th class="numeric">Còn</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="expiryBody"></tbody></table></div>

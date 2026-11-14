@@ -96,8 +96,10 @@ Tài khoản tạo thêm trên giao diện vẫn cần mật khẩu từ 10 ký 
 - **Hiệu quả ưu đãi:** bật một chiến lược là bắt đầu đo (10% khách của nhóm làm nhóm đối chứng, không nhận ưu đãi); tắt là kết thúc.
   Kết quả sau 30 ngày; khung Mô phỏng chỉ để minh họa, không lưu gì.
 - **Gợi ý mua kèm:** bấm *Tính lại* sau khi có thêm nhiều hóa đơn tại quầy.
-- **Kho & hạn dùng:** nhập hàng bằng phiếu nhập (số lô, hạn dùng); xuất hủy lô hết hạn/hư hỏng có ghi lý do. Lô `DK-…` (nhãn DEMO) có
-  hạn dùng giả lập. Không sửa tồn kho trực tiếp: tồn = tổng các lô.
+- **Kho & hạn dùng:** nhập hàng bằng phiếu nhập (số lô, hạn dùng, giá nhập); xuất hủy lô hết hạn/hư hỏng có ghi lý do. Lô `DK-…` là
+  tồn đầu kỳ với hạn dùng và giá gốc gán tự động (migration 007). Không sửa tồn kho trực tiếp: tồn = tổng các lô.
+- **Lợi nhuận gộp:** tab Doanh thu & so sánh, cuối trang (giá vốn theo giá nhập của lô đã bán).
+- **Dữ liệu bán hàng mô phỏng:** `python database\seed_store_sales.py` (tạo 50 hóa đơn) / `--undo` (gỡ sạch). Ca mô phỏng có ghi chú riêng.
 - **Đánh giá của khách:** xem cảnh báo kích ứng da trước tiên (liên hệ khách, kiểm tra lô đã bán); ẩn nhận xét không phù hợp.
 
 ## Ca làm việc tại POS

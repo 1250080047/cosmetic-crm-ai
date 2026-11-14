@@ -51,8 +51,14 @@ try {
     await delay(300); await shot('admin-basket.png', true);
 
     await clickTab('stock'); await wait('document.querySelectorAll("#lotBody tr").length > 1 && document.querySelectorAll("#stockStats .stat-card").length === 4');
-    report.stock = await evaluate('({expiring: document.querySelectorAll("#expiryBody tr").length, lots: document.querySelectorAll("#lotBody tr").length, demoNote: !document.getElementById("stockDemoNote").hidden, receiptLines: document.querySelectorAll("#receiptLines .growth-line").length, scrolled: scrollY})');
+    report.stock = await evaluate('({expiring: document.querySelectorAll("#expiryBody tr").length, lots: document.querySelectorAll("#lotBody tr").length, demoLabels: document.body.innerText.includes("DEMO"), receiptLines: document.querySelectorAll("#receiptLines .growth-line").length, scrolled: scrollY})');
+    if (report.stock.demoLabels) throw new Error('The stock page still shows DEMO labels.');
     await delay(300); await shot('admin-stock.png', true);
+
+    await clickTab('revenue'); await wait('document.querySelectorAll("#profitStats .stat-card").length === 4 && document.querySelectorAll("#profitMonthBody tr").length > 0');
+    report.profit = await evaluate('[...document.querySelectorAll("#profitStats .stat-value")].map((n) => n.textContent)');
+    await evaluate('document.getElementById("profitCard").scrollIntoView();true');
+    await delay(300); await shot('admin-profit.png');
 
     await clickTab('experiments'); await wait('!document.getElementById("experimentCaption").textContent.startsWith("Đang")');
     await evaluate('document.getElementById("simulationForm").requestSubmit();true');   // the simulation is a POST that stores nothing

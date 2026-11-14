@@ -145,11 +145,18 @@ class GrowthIntegrationTest {
         assertThat(mismatched).isZero();
     }
 
+    /** An expired lot of 5 units on the shelf (inside the test transaction, rolled back): stock stays equal to its lots. */
+    private int productWithAnExpiredLot() {
+        Integer product = jdbc.queryForObject("SELECT TOP 1 id FROM products WHERE is_active = 1 AND stock_quantity >= 10 ORDER BY id", Integer.class);
+        jdbc.update("""
+                INSERT INTO stock_lots(product_id, lot_no, expiry_date, quantity_received, quantity_remaining, unit_cost, received_at)
+                VALUES (?, 'TEST-EXPIRED', DATEADD(day, -3, CAST(SYSDATETIME() AS DATE)), 5, 5, 50000, SYSDATETIME())""", product);
+        jdbc.update("UPDATE products SET stock_quantity = stock_quantity + 5 WHERE id = ?", product);
+        return product;
+    }
+
     @Test @Transactional void saleTakesTheLotThatExpiresFirstAndSkipsExpiredLots() {
-        Integer product = jdbc.queryForObject("""
-                SELECT TOP 1 p.id FROM products p WHERE p.is_active = 1 AND p.stock_quantity >= 10
-                  AND EXISTS (SELECT 1 FROM stock_lots l WHERE l.product_id = p.id AND l.quantity_remaining > 0 AND l.expiry_date < CAST(SYSDATETIME() AS DATE))
-                ORDER BY p.id""", Integer.class);
+        int product = productWithAnExpiredLot();
         int stockBefore = jdbc.queryForObject("SELECT stock_quantity FROM products WHERE id = ?", Integer.class, product);
         int sellableBefore = inventory.sellable().getOrDefault(product, 0);
         assertThat(sellableBefore).as("expired units are not sellable").isLessThan(stockBefore);
@@ -184,6 +191,7 @@ class GrowthIntegrationTest {
     }
 
     @Test @Transactional void disposingAnExpiredLotTakesItOutOfStock() {
+        productWithAnExpiredLot();
         var lot = jdbc.queryForMap("""
                 SELECT TOP 1 id, product_id, quantity_remaining FROM stock_lots
                 WHERE quantity_remaining > 0 AND expiry_date < CAST(SYSDATETIME() AS DATE) ORDER BY id""");
@@ -321,6 +329,22 @@ class GrowthIntegrationTest {
         builder.environment().put("POS_QA_PASSWORD", password);
         builder.inheritIO();
         assertThat(builder.start().waitFor()).isZero();
+    }
+
+    @Test void grossProfitIsRevenueMinusTheCostOfTheLotsSold() throws Exception {
+        JsonNode report = get("/api/admin/profit");
+        JsonNode summary = report.path("summary");
+        assertThat(summary.path("orders").asInt()).isPositive();
+        assertThat(summary.path("profit").decimalValue())
+                .isEqualByComparingTo(summary.path("revenue").decimalValue().subtract(summary.path("cost").decimalValue()));
+        assertThat(summary.path("linesWithoutCost").asInt()).as("every product on sale has a cost price").isZero();
+        assertThat(report.path("months").size()).isPositive();
+        assertThat(report.path("products").size()).isBetween(1, 10);
+    }
+
+    @Test void stockOnSaleIsInDateAndPricedAtCost() {
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM products WHERE is_active = 1 AND cost_price IS NULL", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_lots WHERE quantity_remaining > 0 AND unit_cost IS NULL", Integer.class)).isZero();
     }
 
     @Test void managerSeesReviewOverviewAndList() throws Exception {

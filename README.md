@@ -269,9 +269,33 @@ migration `004_inventory_lots.sql`, bảng `stock_receipts`, `stock_lots`, `orde
 - Trang quản trị → tab **Kho & hạn dùng**: cảnh báo lô còn **≤ 60 ngày** hoặc đã hết hạn, sản phẩm còn **≤ 10** đơn vị bán được,
   **phiếu nhập** nhiều dòng (sản phẩm, số lô, hạn dùng, số lượng, giá nhập; không nhận hàng đã hết hạn), **xuất hủy** lô hết hạn/hư hỏng
   kèm lý do, danh sách mọi lô.
-- **Lô tồn đầu kỳ (DEMO):** dữ liệu nền không có hạn dùng, nên hàng có sẵn (100/sản phẩm) được chuyển thành lô `DK-…` với
-  **hạn dùng giả lập** (`is_demo = 1`, có nhãn DEMO trên trang): đa số còn 4–24 tháng, 8 lô sắp hết hạn, 4 lô (20 đơn vị) đã hết hạn
-  để minh họa cảnh báo. Hàng nhập qua phiếu nhập dùng hạn dùng thật.
+- **Lô tồn đầu kỳ:** kho chỉ gồm 200 sản phẩm đang bán ở POS, mỗi sản phẩm một lô `DK-<mã SP>` nhận ngày 01/08/2026. Dữ liệu nền
+  không có hạn dùng và giá gốc, nên migration `007_opening_stock_costs.sql` **gán tự động** (cờ `is_demo = 1` trong database, không
+  hiện trên trang): hạn dùng còn 5–29 tháng (hiện 04/2027 → 03/2029, không lô nào hết hạn) và **giá gốc = 55–70% giá bán** (lãi gộp
+  30–45%, trung bình 37,2%) — giá nhập của lô = giá gốc. Giá trị tồn kho ≈ 1,27 tỷ đ. Hàng nhập qua phiếu nhập dùng hạn dùng, giá thật.
+
+## Lợi nhuận gộp
+
+Tab **Doanh thu & so sánh** → khung *Lợi nhuận gộp — hóa đơn bán tại quầy* ([ProfitService](frontend-pos/src/main/java/com/example/PhanTichAI/service/ProfitService.java)):
+doanh thu thực thu (sau ưu đãi, đổi điểm) − **giá vốn của đúng lô đã bán** (giá nhập lô qua `order_item_lots`; hóa đơn trước khi có lô
+dùng giá gốc sản phẩm; quà tặng 0 đ vẫn tính giá vốn). Có tổng, theo tháng và 10 sản phẩm lãi gộp cao nhất. Hóa đơn OnlineSales không có
+giá vốn nên không tính.
+
+## Dữ liệu bán hàng mô phỏng (để phân tích)
+
+[database/seed_store_sales.py](database/seed_store_sales.py) tạo **50 hóa đơn bán tại quầy mô phỏng** từ 15/08 đến 13/11/2026 theo
+đúng quy tắc của POS: lấy hàng theo lô (hạn gần trước), trừ kho, tích điểm theo hạng, mỗi ngày một ca đã kết của một thu ngân, một phần
+hóa đơn mua theo cặp "hay mua kèm". Khách: 3 thành viên + 31 khách của dữ liệu nền quay lại + khách vãng lai (≥ 30 khách mua trong 12
+tháng, đủ cho bước 7). Ca mô phỏng có ghi chú *"Dữ liệu bán hàng mô phỏng"*; seed cố định nên chạy lại cho cùng kết quả.
+
+```powershell
+python database\seed_store_sales.py          # tạo (từ chối nếu đã có)
+python database\seed_store_sales.py --undo   # gỡ hết: trả hàng về đúng lô, xóa điểm, hóa đơn, ca; tính lại tổng của khách
+```
+
+Kết quả hiện tại (cùng 8 hóa đơn bán thử tại quầy): 58 hóa đơn, doanh thu thực thu 14,83 triệu đ, giá vốn 9,62 triệu đ, **lợi nhuận gộp
+5,22 triệu đ (35,2%)**. **Bước 7 phát hiện lệch** với 34 khách: chi tiêu 12 tháng (M) thấp hơn dữ liệu nền 3,32 độ lệch chuẩn, 88% khách
+rơi vào nhóm ngủ đông (dữ liệu nền 30%) → gợi ý xem trước mô hình mới (bước 8). Khi viết báo cáo, ghi rõ đây là dữ liệu mô phỏng.
 
 ## Đánh giá sản phẩm & phân tích cảm xúc
 
