@@ -30,6 +30,7 @@ class MemberSecurityTest {
     @MockBean MemberService members;
     @MockBean MemberQrService qr;
     @MockBean CustomerRepository customers;
+    @MockBean com.example.PhanTichAI.service.ReviewService reviews;
 
     private MockHttpSession signedIn() throws Exception {
         Customer customer = new Customer(); customer.setCustomerId(33627); customer.setCustomerCode("KH33627");
@@ -81,6 +82,20 @@ class MemberSecurityTest {
                         .contentType("application/json").content("{\"phone\":\"0912345678\",\"code\":\"111111\",\"pin\":\"135790\"}"))
                 .andExpect(status().isTooManyRequests()).andExpect(jsonPath("$.success").value(false));
         verify(members, times(10)).activate(any(), any(), any());
+    }
+
+    @Test void reviewsNeedASignedInCustomerAndCsrf() throws Exception {
+        mvc.perform(get("/api/member/reviews")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/member/reviews").with(csrf()).contentType("application/json").content("{\"productId\":1,\"rating\":5}"))
+                .andExpect(status().isUnauthorized());
+        MockHttpSession session = signedIn();
+        mvc.perform(post("/api/member/reviews").session(session).contentType("application/json").content("{\"productId\":1,\"rating\":5}"))
+                .andExpect(status().isForbidden());   // no CSRF token
+        when(reviews.save(33627, 1, 5, "Thơm, mịn")).thenReturn(Map.of("success", true, "bonus_points", 0));
+        mvc.perform(post("/api/member/reviews").session(session).with(csrf()).contentType("application/json")
+                        .content("{\"productId\":1,\"rating\":5,\"comment\":\"Thơm, mịn\"}"))
+                .andExpect(status().isOk());
+        verify(reviews).save(33627, 1, 5, "Thơm, mịn");   // always the signed-in customer, never an id from the browser
     }
 
     @Test void wrongPinMessageComesBackToThePage() throws Exception {

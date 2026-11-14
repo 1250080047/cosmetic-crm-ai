@@ -122,13 +122,16 @@ header a { color: inherit; text-decoration: none; border: 1px solid #ffffff50; b
 .member-url { font-size: 12.5px; color: #475569; word-break: break-all; margin: 0; }
 .member-scope { font-size: 12.5px; color: #0f766e; margin: 6px 0 0; line-height: 1.45; }
 
-/* Tiers and points */
+/* Tiers and points (rows with display:flex need an explicit rule to stay hidden) */
+.summary-row[hidden], .card-box[hidden], .tier-badge[hidden] { display: none !important; }
 .tier-badge { padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: #eef2f6; color: #475569; border: 1px solid #cbd5e1; }
 .tier-badge[data-tier="SILVER"] { background: #f1f5f9; color: #334155; border-color: #94a3b8; }
 .tier-badge[data-tier="GOLD"] { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
 .points-row { color: #b45309; align-items: center; }
 .points-row select { margin-left: 4px; padding: 2px 4px; border: 1px solid #fcd34d; border-radius: 5px; font-size: 12.5px; background: #fffbeb; }
 .points-hint { margin: 4px 0 6px; font-size: 11.5px; color: #92400e; background: #fffbeb; border: 1px dashed #fcd34d; border-radius: 6px; padding: 5px 8px; }
+
+.product-rating { font-size: 11.5px; color: #b45309; font-weight: 600; margin-top: 2px; }
 
 /* Bought together */
 .suggest-box .box-title { color: #7c3aed; }

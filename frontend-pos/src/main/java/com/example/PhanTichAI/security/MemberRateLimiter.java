@@ -21,7 +21,8 @@ public class MemberRateLimiter {
     public enum Action {
         REGISTER(5, Duration.ofHours(1)),
         LOGIN(20, Duration.ofMinutes(10)),
-        ACTIVATE(10, Duration.ofMinutes(10));
+        ACTIVATE(10, Duration.ofMinutes(10)),
+        REVIEW(30, Duration.ofHours(1));
 
         final int limit;
         final Duration window;

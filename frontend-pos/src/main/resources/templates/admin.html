@@ -55,6 +55,7 @@
             <button class="nav-item" data-tab="strategies"><svg class="icon"><use href="#i-target"/></svg><span>Chiến lược ưu đãi</span></button>
             <button class="nav-item" data-tab="experiments"><svg class="icon"><use href="#i-target"/></svg><span>Hiệu quả ưu đãi</span></button>
             <button class="nav-item" data-tab="basket"><svg class="icon"><use href="#i-basket"/></svg><span>Gợi ý mua kèm</span></button>
+            <button class="nav-item" data-tab="reviews"><svg class="icon"><use href="#i-info"/></svg><span>Đánh giá của khách</span></button>
             <button class="nav-item" data-tab="orders"><svg class="icon"><use href="#i-receipt"/></svg><span>Lịch sử hóa đơn</span></button>
             <button class="nav-item" data-tab="revenue"><svg class="icon"><use href="#i-wallet"/></svg><span>Doanh thu & so sánh</span></button>
             <button class="nav-item" data-tab="products"><svg class="icon"><use href="#i-box"/></svg><span>Sản phẩm & tồn kho</span></button>
@@ -148,7 +149,7 @@
 
             <section id="tab-experiments" class="tab-panel" hidden aria-label="Hiệu quả ưu đãi">
                 <section class="card">
-                    <div class="card-heading"><div><h2>Ưu đãi có làm khách quay lại không?</h2><p class="muted" id="experimentCaption">Đang đọc kết quả đo…</p></div></div>
+                    <div class="card-heading"><div><h2>Kết quả các lần đo</h2><p class="muted" id="experimentCaption">Đang đọc kết quả đo…</p></div></div>
                     <details class="growth-explain" open>
                         <summary>Cách đo (nhóm đối chứng)</summary>
                         <ul>
@@ -191,6 +192,32 @@
                     <div class="card-heading"><div><h2>Quy tắc “khách mua A thường mua B”</h2><p class="muted">Ở POS, thu ngân thấy tối đa 3 gợi ý có độ tin cậy cao nhất cho các món đang trong giỏ (chỉ sản phẩm còn hàng).</p></div></div>
                     <div class="orders-toolbar"><label class="search-field"><input id="basketSearch" type="search" placeholder="Tìm sản phẩm…" aria-label="Tìm trong quy tắc mua kèm"></label><span class="result-count" id="basketCount"></span></div>
                     <div class="table-scroll"><table><thead><tr><th>Khách mua (A)</th><th>Gợi ý thêm (B)</th><th class="numeric">Mua chung</th><th class="numeric">Độ tin cậy</th><th class="numeric">Lift</th><th class="numeric">Support</th></tr></thead><tbody id="basketBody"></tbody></table></div>
+                </section>
+            </section>
+            <section id="tab-reviews" class="tab-panel" hidden aria-label="Đánh giá của khách">
+                <div class="stats-grid" id="reviewStats"></div>
+                <p class="growth-warning" id="irritationAlert" hidden></p>
+                <section class="card">
+                    <div class="card-heading"><div><h2>Sản phẩm theo đánh giá</h2><p class="muted">Sản phẩm có báo kích ứng da và nhiều lời chê được xếp lên đầu.</p></div>
+                        <button class="button button-secondary" id="analyzePending" type="button" hidden><svg class="icon"><use href="#i-refresh"/></svg>Phân tích đánh giá còn chờ</button></div>
+                    <div class="table-scroll"><table><thead><tr><th>Sản phẩm</th><th class="numeric">Số đánh giá</th><th class="numeric">Sao trung bình</th><th class="numeric">Chê</th><th class="numeric">Báo kích ứng</th></tr></thead><tbody id="reviewProductBody"></tbody></table></div>
+                </section>
+                <section class="card">
+                    <div class="card-heading"><div><h2>Khách nhắc tới điều gì?</h2><p class="muted">Chủ đề nhận ra trong nhận xét (mùi hương, giá, bao bì, hiệu quả, kết cấu, kích ứng da, phục vụ).</p></div></div>
+                    <div class="table-scroll"><table><thead><tr><th>Chủ đề</th><th class="numeric">Số nhận xét</th><th class="numeric">Trong đó chê</th></tr></thead><tbody id="reviewTopicBody"></tbody></table></div>
+                </section>
+                <section class="card">
+                    <div class="card-heading"><div><h2>Nhận xét của khách</h2><p class="muted">Chỉ khách đã mua tại quầy mới đánh giá được. Ẩn nhận xét không phù hợp; nhận xét bị ẩn không tính vào số sao ở POS.</p></div></div>
+                    <div class="orders-toolbar"><label class="payment-filter">Lọc<select id="reviewFilter"><option value="all">Tất cả</option><option value="negative">Chê</option><option value="irritation">Báo kích ứng da</option><option value="hidden">Đã ẩn</option><option value="pending">Chưa phân tích</option></select></label><span class="result-count" id="reviewCount"></span></div>
+                    <div class="table-scroll"><table><thead><tr><th>Ngày</th><th>Sản phẩm</th><th>Khách</th><th>Sao</th><th>Nhận xét</th><th>Cảm xúc</th><th>Chủ đề</th><th>Thao tác</th></tr></thead><tbody id="reviewBody"></tbody></table></div>
+                    <details class="growth-explain">
+                        <summary>Máy đọc cảm xúc thế nào? (sách Essentials of Marketing Analytics, chương 10)</summary>
+                        <ul>
+                            <li>Chạy ngay trên máy cửa hàng (không gửi lời của khách ra ngoài): từ điển khen/chê dành cho mỹ phẩm, đọc được cả khi khách gõ không dấu.</li>
+                            <li>Hiểu phủ định: “không thơm” là chê, “không bết”, “không bị kích ứng” là khen; “rất”, “quá” làm mạnh thêm.</li>
+                            <li>Kết hợp lời nhận xét với số sao → Khen / Trung lập / Chê. Nhắc tới dị ứng, kích ứng, nổi mẩn, ngứa, rát… luôn tính là chê và hiện cảnh báo.</li>
+                        </ul>
+                    </details>
                 </section>
             </section>
             <section id="tab-orders" class="tab-panel" hidden aria-label="Lịch sử hóa đơn">

@@ -17,10 +17,18 @@
 @media (max-width: 760px) { .growth-line { grid-template-columns: 1fr 1fr; } }
 .growth-note { font-size: 12.5px; color: #64748b; margin: 6px 0 0; }
 .growth-warning { padding: 10px 12px; border-radius: 8px; background: #fff4db; color: #7a4a00; font-size: 13px; margin: 0 0 12px; }
-.growth-subheading { font-size: 14px; margin: 20px 0 8px; }
+.growth-subheading { font-size: 14px; margin: 20px 22px 8px; }
+.card > .growth-form, .card > #simulationResult, .card > .growth-explain { margin-left: 22px; margin-right: 22px; }
+.card > .growth-form { padding-bottom: 6px; }
+.card > .growth-explain { margin-bottom: 18px; }
+.card > #simulationResult { padding-bottom: 18px; }
+.card .experiment-result > p { margin-left: 22px; margin-right: 22px; }
 .growth-form .form-error { margin: 0; color: #b42318; font-size: 13px; }
 .growth-form .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 .growth-line > button { align-self: end; margin-bottom: 2px; }
+.review-stars-admin { color: #b7791f; letter-spacing: 1px; white-space: nowrap; }
+.review-comment { max-width: 340px; white-space: pre-line; font-size: 13px; }
+.review-comment.hidden-review { opacity: .55; text-decoration: line-through; }
 .experiment-result { display: grid; gap: 6px; }
 .experiment-verdict { margin: 6px 0 0; padding: 10px 12px; border-radius: 8px; font-weight: 600; font-size: 13.5px; }
 .experiment-verdict.ok { background: #e7f6ec; color: #1f7a3d; }

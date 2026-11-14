@@ -22,6 +22,26 @@ public class AiIntegrationService {
             return execution.execute(request, body);
         });
         this.predictUrl = baseUrl + "/api/ai/predict";
+        this.sentimentUrl = baseUrl + "/api/ai/review-sentiment";
+    }
+
+    private final String sentimentUrl;
+
+    /**
+     * Sentiment of a product review (positive / neutral / negative, topics, skin irritation), computed by the analysis
+     * service on this computer. Null when the service is not reachable: the review is kept and analysed later.
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> analyzeReview(String text, int rating) {
+        try {
+            Map<String, Object> body = new java.util.HashMap<>();
+            body.put("text", text == null ? "" : text);
+            body.put("rating", rating);
+            return restTemplate.postForObject(sentimentUrl, body, Map.class);
+        } catch (Exception error) {
+            System.err.println("Chưa phân tích được cảm xúc đánh giá: " + error.getClass().getSimpleName());
+            return null;
+        }
     }
 
     /** Places one customer's L, R, F, M on the stored ruler of the active model (no learning happens here). */

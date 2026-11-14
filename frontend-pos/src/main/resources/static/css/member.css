@@ -64,6 +64,25 @@ h1 { font-size: 19px; margin: 6px 0 12px; }
 .member-card[data-tier="SILVER"] { background: linear-gradient(135deg, #4b5563 0%, #6b7280 55%, #9ca3af 100%); }
 .member-card[data-tier="GOLD"] { background: linear-gradient(135deg, #8a5a12 0%, #b7791f 55%, #d9a441 100%); }
 .history .minus { display: block; color: #b42318; font-size: 12.5px; font-weight: 700; }
+.review-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.review-list .empty { color: var(--muted); font-size: 13.5px; }
+.review-item { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.review-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.review-head span { display: block; font-weight: 600; font-size: 14px; }
+.review-head small { color: var(--muted); font-size: 12px; }
+.review-open { flex: none; padding: 7px 12px; font-size: 13px; width: auto; }
+.review-mine { margin-top: 6px; font-size: 13.5px; }
+.review-mine p { margin: 4px 0 0; white-space: pre-line; }
+.review-stars { color: var(--gold); letter-spacing: 2px; }
+.muted-note { color: var(--muted); }
+.review-form { margin-top: 10px; display: grid; gap: 6px; }
+.star-row { display: flex; gap: 4px; }
+.star { border: 0; background: none; font-size: 30px; line-height: 1; color: #d6dcd4; cursor: pointer; padding: 0 2px; }
+.star.on { color: var(--gold); }
+.review-form textarea { width: 100%; padding: 10px; font: inherit; font-size: 15px; border: 1.5px solid #cfd8cf; border-radius: 10px; resize: vertical; }
+.review-form .counter { text-align: right; color: var(--muted); font-size: 12px; }
+.review-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.review-actions button { width: auto; padding: 9px 16px; }
 
 .offer-title { font-weight: 700; color: var(--green-dark); }
 .offer-line { margin: 4px 0 0; font-size: 14px; }

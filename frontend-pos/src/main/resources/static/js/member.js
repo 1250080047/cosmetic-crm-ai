@@ -79,6 +79,87 @@
         renderOffer(card.offer, card.total_orders);
         renderHistory(card);
         loadQr();
+        loadReviews();
+    }
+
+    // ---- reviews of products bought at the store ------------------------------------------------
+    async function loadReviews() {
+        const list = $('reviewList');
+        try {
+            const data = await api('/api/member/reviews');
+            $('reviewHint').textContent = 'Viết nhận xét từ ' + data.bonus_min_chars + ' ký tự cho lần đánh giá đầu tiên của mỗi sản phẩm để được thưởng ' +
+                data.bonus_points + ' điểm.';
+            renderReviews(data.products || []);
+        } catch (error) {
+            if (error.status === 401) { showAuth('login', 'Phiên đăng nhập đã hết hạn. Hãy nhập lại PIN.'); return; }
+            list.replaceChildren(el('li', 'Chưa tải được danh sách: ' + error.message, 'empty'));
+        }
+    }
+    const stars = (rating) => '★'.repeat(rating) + '☆'.repeat(5 - rating);
+    function renderReviews(products) {
+        const list = $('reviewList');
+        list.replaceChildren();
+        if (!products.length) { list.append(el('li', 'Mua sắm tại cửa hàng để đánh giá sản phẩm bạn đã dùng.', 'empty')); return; }
+        products.forEach((product) => {
+            const li = el('li', null, 'review-item'), head = el('div', null, 'review-head');
+            const title = el('div');
+            title.append(el('span', product.productName), el('small', 'Mua ngày ' + day(product.lastBought)));
+            const button = el('button', product.reviewId ? 'Sửa' : 'Đánh giá', 'secondary review-open');
+            button.type = 'button';
+            head.append(title, button);
+            li.append(head);
+            if (product.reviewId) {
+                const mine = el('div', null, 'review-mine');
+                mine.append(el('span', stars(product.rating), 'review-stars'));
+                if (product.comment) mine.append(el('p', product.comment));
+                if (product.status === 'HIDDEN') mine.append(el('small', 'Cửa hàng đang xem lại đánh giá này.', 'muted-note'));
+                li.append(mine);
+            }
+            button.addEventListener('click', () => openReviewForm(li, product));
+            list.append(li);
+        });
+    }
+    function openReviewForm(li, product) {
+        li.querySelector('.review-form')?.remove();
+        const form = el('form', null, 'review-form');
+        let rating = product.rating || 0;
+        const row = el('div', null, 'star-row');
+        row.setAttribute('role', 'radiogroup'); row.setAttribute('aria-label', 'Số sao');
+        const paint = () => row.querySelectorAll('button').forEach((star, i) => {
+            star.classList.toggle('on', i < rating); star.setAttribute('aria-checked', String(i + 1 === rating));
+        });
+        for (let i = 1; i <= 5; i++) {
+            const star = el('button', '★', 'star');
+            star.type = 'button'; star.setAttribute('role', 'radio'); star.setAttribute('aria-label', i + ' sao');
+            star.addEventListener('click', () => { rating = i; paint(); });
+            row.append(star);
+        }
+        const text = el('textarea');
+        text.maxLength = 500; text.rows = 3; text.placeholder = 'Mùi hương, cảm giác trên da, hiệu quả, bao bì…';
+        text.value = product.comment || '';
+        const counter = el('small', text.value.length + '/500', 'counter');
+        text.addEventListener('input', () => { counter.textContent = text.value.length + '/500'; });
+        const message = el('p', null, 'form-message'); message.hidden = true;
+        const save = el('button', 'Gửi đánh giá', 'primary'); save.type = 'submit';
+        const cancel = el('button', 'Hủy', 'secondary'); cancel.type = 'button';
+        cancel.addEventListener('click', () => form.remove());
+        const actions = el('div', null, 'review-actions'); actions.append(cancel, save);
+        form.append(row, text, counter, message, actions);
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!rating) { message.hidden = false; message.textContent = 'Chọn số sao.'; return; }
+            save.disabled = true;
+            try {
+                const result = await api('/api/member/reviews', { productId: product.productId, rating, comment: text.value });
+                message.hidden = false; message.classList.add('ok'); message.textContent = result.message;
+                setTimeout(async () => { try { showCard(await api('/api/member/me')); } catch { loadReviews(); } }, 1200);
+            } catch (error) {
+                message.hidden = false; message.classList.remove('ok'); message.textContent = error.message; save.disabled = false;
+            }
+        });
+        li.append(form);
+        paint();
+        text.focus({ preventScroll: true });
     }
     // Tier from the store spend of the last 12 months: Thành viên → Bạc (2.000.000 đ, points ×1,5) → Vàng (5.000.000 đ, ×2).
     function renderTier(card) {

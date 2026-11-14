@@ -160,6 +160,12 @@
             title.title = product.productName;
             info.append(title, node('span', 'product-category-tag', categoryName(product.categoryId)),
                 node('div', 'product-price', money(product.unitPrice)), node('div', 'product-barcode', 'Mã: ' + (product.barcode || product.id)));
+            if (Number(product.reviews) > 0) {
+                const stars = node('div', 'product-rating', '★ ' + Number(product.rating).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) +
+                    ' (' + Number(product.reviews).toLocaleString('vi-VN') + ' đánh giá)');
+                stars.title = 'Điểm trung bình khách đánh giá sau khi mua';
+                info.append(stars);
+            }
             const actions = node('div', 'product-actions');
             const gift = eligibleGift(product.id);
             if (gift) info.append(node('span', 'gift-eligible-badge', 'Quà trong ưu đãi · 0đ'));

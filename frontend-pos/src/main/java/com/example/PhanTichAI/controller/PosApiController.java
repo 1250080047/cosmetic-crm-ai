@@ -68,9 +68,14 @@ public class PosApiController {
         List<Map<String, Object>> rows = jdbc.queryForList(com.example.PhanTichAI.service.InventoryService.SELLABLE_SQL);
         if (rows != null) rows.forEach(row -> sellable.put(((Number) row.get("product_id")).intValue(), ((Number) row.get("sellable")).intValue()));
         boolean lotsKnown = !sellable.isEmpty();
+        Map<Integer, Map<String, Object>> ratings = new HashMap<>();   // average stars of visible customer reviews
+        List<Map<String, Object>> rated = jdbc.queryForList(com.example.PhanTichAI.service.ReviewService.RATINGS_SQL);
+        if (rated != null) rated.forEach(row -> ratings.put(((Number) row.get("product_id")).intValue(), row));
         return productRepository.findByIsActiveTrueOrderByIdAsc().stream().map(product -> {
             Map<String, Object> view = publicProduct(product);
             if (lotsKnown) view.put("stockQuantity", sellable.getOrDefault(product.getId(), 0));
+            Map<String, Object> rating = ratings.get(product.getId());
+            if (rating != null) { view.put("rating", rating.get("rating")); view.put("reviews", rating.get("reviews")); }
             return view;
         }).toList();
     }

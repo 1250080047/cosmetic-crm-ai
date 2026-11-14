@@ -36,6 +36,12 @@ public class LoyaltyPoint {
     @Column(name = "kind", nullable = false, length = 10)
     private String kind = EARN;
 
+    /** product_reviews.id với điểm thưởng đánh giá (BONUS); mỗi đánh giá thưởng tối đa một lần. */
+    @Column(name = "review_id")
+    private Integer reviewId;
+
+    public Integer getReviewId() { return reviewId; }
+
     public LoyaltyPoint() {}
 
     public LoyaltyPoint(Integer customerId, String transactionNo, Integer points, String note, LocalDateTime createdAt) {

@@ -6,6 +6,7 @@ import com.example.PhanTichAI.security.MemberRateLimiter;
 import com.example.PhanTichAI.security.MemberRateLimiter.Action;
 import com.example.PhanTichAI.security.PublicMemberGateway;
 import com.example.PhanTichAI.service.MemberQrService;
+import com.example.PhanTichAI.service.ReviewService;
 import com.example.PhanTichAI.service.MemberService;
 import com.example.PhanTichAI.service.MemberService.MemberException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,9 +31,32 @@ public class MemberController {
     private final MemberQrService qr;
     private final CustomerRepository customers;
     private final MemberRateLimiter limiter;
+    private final ReviewService reviews;
 
-    public MemberController(MemberService members, MemberQrService qr, CustomerRepository customers, MemberRateLimiter limiter) {
-        this.members = members; this.qr = qr; this.customers = customers; this.limiter = limiter;
+    public MemberController(MemberService members, MemberQrService qr, CustomerRepository customers, MemberRateLimiter limiter,
+                            ReviewService reviews) {
+        this.members = members; this.qr = qr; this.customers = customers; this.limiter = limiter; this.reviews = reviews;
+    }
+
+    public record ReviewRequest(Integer productId, Integer rating, String comment) {}
+
+    /** Products the signed-in customer bought at the store, with their review. */
+    @GetMapping("/api/member/reviews") @ResponseBody
+    public Map<String, Object> myReviews(HttpSession session) {
+        return Map.of("products", reviews.forCustomer(member(session)), "bonus_points", ReviewService.BONUS_POINTS,
+                "bonus_min_chars", ReviewService.BONUS_MIN_CHARS);
+    }
+
+    @PostMapping("/api/member/reviews") @ResponseBody
+    public Map<String, Object> review(@RequestBody ReviewRequest body, HttpSession session, HttpServletRequest request) {
+        int customerId = member(session);
+        slowDown(Action.REVIEW, request);
+        if (body == null || body.productId() == null || body.rating() == null) throw new MemberException(400, "Chọn sản phẩm và số sao.");
+        try {
+            return reviews.save(customerId, body.productId(), body.rating(), body.comment());
+        } catch (IllegalArgumentException refused) {
+            throw new MemberException(400, refused.getMessage());
+        }
     }
 
     public record RegisterRequest(String fullName, String phone, String pin) {}

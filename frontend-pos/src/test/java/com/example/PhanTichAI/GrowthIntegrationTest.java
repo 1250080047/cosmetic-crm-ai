@@ -42,9 +42,11 @@ class GrowthIntegrationTest {
     @Autowired ObjectMapper mapper;
     @Autowired PosCheckoutService checkout;
     private HttpClient client;
+    private String password;
 
     @BeforeEach void signIn() throws Exception {
-        String password = UUID.randomUUID().toString(), hash = encoder.encode(password);
+        password = UUID.randomUUID().toString();
+        String hash = encoder.encode(password);
         when(accounts.loadUserByUsername("growth-preview")).thenAnswer(i -> new StoreUser(-8, "growth-preview", hash, "Kiểm tra tính năng mới", "ADMIN", true));
         when(accounts.needsSetup()).thenReturn(false);
         client = HttpClient.newBuilder().cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL)).followRedirects(HttpClient.Redirect.NEVER).build();
@@ -266,6 +268,64 @@ class GrowthIntegrationTest {
         JsonNode simulation = mapper.readTree(response.body());
         assertThat(simulation.path("simulated").asBoolean()).isTrue();
         assertThat(simulation.path("control").path("customers").asInt()).isEqualTo(300);
+    }
+
+    // ---- 5. product reviews and sentiment -------------------------------------------------------------
+    @Autowired com.example.PhanTichAI.service.ReviewService reviewService;
+
+    @Test @Transactional void customerReviewsAProductBoughtAtTheStoreAndEarnsTheBonusOnce() {
+        Integer customer = jdbc.queryForObject("SELECT TOP 1 customer_id FROM customers ORDER BY customer_id", Integer.class);
+        Integer product = jdbc.queryForObject("SELECT TOP 1 id FROM products WHERE is_active = 1 AND stock_quantity > 5 ORDER BY id DESC", Integer.class);
+        Integer other = jdbc.queryForObject("SELECT TOP 1 id FROM products WHERE is_active = 1 AND id <> ? ORDER BY id", Integer.class, product);
+        jdbc.update("DELETE FROM product_reviews WHERE customer_id = ?", customer);   // rolled back
+        CheckoutRequest request = new CheckoutRequest();
+        CheckoutRequest.ItemDto item = new CheckoutRequest.ItemDto();
+        item.setProductId(product); item.setQuantity(1);
+        request.setItems(List.of(item)); request.setCustomerId(customer); request.setPaymentMethod("CASH");
+        checkout.checkout(request);
+        entityManager.flush();
+        int pointsBefore = jdbc.queryForObject("SELECT COALESCE(SUM(points), 0) FROM loyalty_points WHERE customer_id = ?", Integer.class, customer);
+
+        assertThat(reviewService.forCustomer(customer)).anySatisfy(row -> assertThat(row.get("productId")).isEqualTo(product));
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> reviewService.save(customer, other, 5, "Không mua mà vẫn đánh giá"))
+                .hasMessageContaining("đã mua tại cửa hàng");
+
+        var first = reviewService.save(customer, product, 2, "Bôi lên bị nổi mẩn đỏ và ngứa, thất vọng");
+        assertThat(first.get("bonus_points")).isEqualTo(10);
+        var stored = jdbc.queryForMap("SELECT sentiment, irritation, topics FROM product_reviews WHERE id = ?", first.get("review_id"));
+        assertThat(stored.get("sentiment")).as("analysed by FastAPI on this computer").isEqualTo("NEGATIVE");
+        assertThat(stored.get("irritation")).isEqualTo(true);
+        assertThat((String) stored.get("topics")).contains("Kích ứng da");
+
+        var edited = reviewService.save(customer, product, 4, "Dùng lại thấy ổn hơn, thơm nhẹ, không bết");
+        assertThat(edited.get("review_id")).isEqualTo(first.get("review_id"));
+        assertThat(edited.get("bonus_points")).as("the bonus is given once per review").isEqualTo(0);
+        assertThat(jdbc.queryForObject("SELECT sentiment FROM product_reviews WHERE id = ?", String.class, first.get("review_id"))).isEqualTo("POSITIVE");
+        assertThat(jdbc.queryForObject("SELECT COALESCE(SUM(points), 0) FROM loyalty_points WHERE customer_id = ?", Integer.class, customer))
+                .isEqualTo(pointsBefore + 10);
+
+        var ratings = jdbc.queryForList(com.example.PhanTichAI.service.ReviewService.RATINGS_SQL);
+        assertThat(ratings).anySatisfy(row -> assertThat(((Number) row.get("product_id")).intValue()).isEqualTo(product));
+        reviewService.setStatus((Integer) first.get("review_id"), "HIDDEN", null);
+        assertThat(jdbc.queryForList(com.example.PhanTichAI.service.ReviewService.RATINGS_SQL))
+                .noneSatisfy(row -> assertThat(((Number) row.get("product_id")).intValue()).isEqualTo(product));
+        assertThat(reviewService.overview().get("summary")).isNotNull();
+    }
+
+    /** POS_BROWSER_QA=1: the new admin tabs and the POS suggestions in headless Chrome (screenshots in target/growth-ui-qa). */
+    @Test @org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named = "POS_BROWSER_QA", matches = "1")
+    void newScreensRenderWithoutErrors() throws Exception {
+        var builder = new ProcessBuilder("node", java.nio.file.Path.of("src/test/browser/growth-ui.mjs").toAbsolutePath().toString());
+        builder.environment().put("POS_QA_URL", base());
+        builder.environment().put("POS_QA_USER", "growth-preview");
+        builder.environment().put("POS_QA_PASSWORD", password);
+        builder.inheritIO();
+        assertThat(builder.start().waitFor()).isZero();
+    }
+
+    @Test void managerSeesReviewOverviewAndList() throws Exception {
+        assertThat(get("/api/admin/reviews/overview").path("summary").has("reviews")).isTrue();
+        assertThat(get("/api/admin/reviews?filter=irritation").isArray()).isTrue();
     }
 
     @Test @Transactional void productAddedFromASuggestionIsMarkedOnTheInvoice() {

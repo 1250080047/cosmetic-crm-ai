@@ -88,6 +88,18 @@ Tài khoản tạo thêm trên giao diện vẫn cần mật khẩu từ 10 ký 
 - Điểm: 1 điểm / 10.000 đ thực trả, cộng khi thanh toán (cùng giao dịch hóa đơn). Hóa đơn bán tại quầy trước khi có tính năng
   được cộng điểm một lần bởi `database/migrations/001_member_points.sql`.
 
+## Đổi điểm, hạng thẻ và các tab mới
+
+- **Đổi điểm tại quầy:** 100 điểm = giảm 10.000 đ, tối đa 50% hóa đơn sau ưu đãi. Thu ngân phải **quét mã QR trên điện thoại khách**
+  (📷) — hiệu lực 15 phút, một lần quét cho một hóa đơn; máy chủ từ chối dùng điểm khi chỉ gõ số điện thoại (`PosPointsPresenceTest`).
+- **Hạng thẻ** theo chi tiêu tại cửa hàng 12 tháng: Bạc từ 2.000.000 đ (điểm ×1,5), Vàng từ 5.000.000 đ (điểm ×2).
+- **Hiệu quả ưu đãi:** bật một chiến lược là bắt đầu đo (10% khách của nhóm làm nhóm đối chứng, không nhận ưu đãi); tắt là kết thúc.
+  Kết quả sau 30 ngày; khung Mô phỏng chỉ để minh họa, không lưu gì.
+- **Gợi ý mua kèm:** bấm *Tính lại* sau khi có thêm nhiều hóa đơn tại quầy.
+- **Kho & hạn dùng:** nhập hàng bằng phiếu nhập (số lô, hạn dùng); xuất hủy lô hết hạn/hư hỏng có ghi lý do. Lô `DK-…` (nhãn DEMO) có
+  hạn dùng giả lập. Không sửa tồn kho trực tiếp: tồn = tổng các lô.
+- **Đánh giá của khách:** xem cảnh báo kích ứng da trước tiên (liên hệ khách, kiểm tra lô đã bán); ẩn nhận xét không phù hợp.
+
 ## Ca làm việc tại POS
 
 - Thu ngân phải **mở ca** (nhập tiền mặt đầu ca) trước khi thanh toán; máy chủ từ chối hóa đơn khi người bán chưa có ca mở. Mỗi hóa đơn lưu `cashier_id` và `shift_id`.

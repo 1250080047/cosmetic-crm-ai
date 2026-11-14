@@ -130,7 +130,8 @@
             stat('Lô sắp hết hạn', count(s.expiringLots), count(s.expiringUnits) + ' đơn vị, hạn còn ≤ ' + (rules.expiry_warning_days ?? 60) + ' ngày'),
             stat('Lô đã hết hạn', count(s.expiredLots), count(s.expiredUnits) + ' đơn vị không bán được — cần xuất hủy'),
             stat('Sản phẩm sắp hết hàng', count(s.lowStockProducts), 'còn ≤ ' + (rules.low_stock ?? 10) + ' đơn vị còn hạn'),
-            stat('Giá trị tồn kho', money(s.stockValue), 'theo giá nhập của từng lô'));
+            Number(s.stockValue) > 0 ? stat('Giá trị tồn kho', money(s.stockValue), 'theo giá nhập của từng lô (lô chưa ghi giá nhập không tính)')
+                : stat('Giá trị tồn kho', '—', 'chưa có lô nào ghi giá nhập; nhập hàng có giá để tính'));
         $('stockDemoNote').hidden = !Number(s.demoLots);
         $('stockDemoNote').textContent = 'Có ' + count(s.demoLots) + ' lô tồn đầu kỳ (nhãn DEMO) với hạn dùng GIẢ LẬP để minh họa cảnh báo, vì dữ liệu nền không có hạn dùng. Hàng nhập mới qua phiếu nhập dùng hạn dùng thật.';
         rows('expiryBody', data.expiring || [], [
@@ -306,8 +307,74 @@
         finally { button.disabled = false; }
     });
 
+    // ---- Customers' product reviews ---------------------------------------------------------------
+    const sentimentLabel = { POSITIVE: ['Khen', 'ok'], NEUTRAL: ['Trung lập', 'muted'], NEGATIVE: ['Chê', 'danger'] };
+    const starText = (rating) => '★'.repeat(rating) + '☆'.repeat(5 - rating);
+    async function loadReviews() {
+        const overview = await api('/reviews/overview');
+        const s = overview.summary;
+        $('reviewStats').replaceChildren(
+            stat('Đánh giá', count(s.reviews), 'sao trung bình ' + (s.averageRating == null ? '—' : number.format(s.averageRating))),
+            stat('Khen', count(s.positive), s.reviews ? percent(s.positive / s.reviews) + ' số đánh giá' : '—'),
+            stat('Chê', count(s.negative), s.reviews ? percent(s.negative / s.reviews) + ' số đánh giá' : '—'),
+            stat('Báo kích ứng da', count(s.irritation), 'cần liên hệ khách và kiểm tra lô hàng'));
+        $('irritationAlert').hidden = !Number(s.irritation);
+        $('irritationAlert').textContent = '⚠ Có ' + count(s.irritation) + ' đánh giá báo dị ứng / kích ứng da. Hãy liên hệ khách, kiểm tra lô hàng đã bán (tab Kho & hạn dùng) và cân nhắc tạm ngưng bán.';
+        $('analyzePending').hidden = !Number(s.pending);
+        $('analyzePending').lastChild.textContent = 'Phân tích ' + count(s.pending) + ' đánh giá còn chờ';
+        rows('reviewProductBody', overview.products || [], [
+            { value: (p) => p.productName }, { numeric: true, value: (p) => count(p.reviews) },
+            { numeric: true, value: (p) => p.averageRating == null ? '—' : '★ ' + number.format(p.averageRating) },
+            { numeric: true, value: (p) => count(p.negative) },
+            { numeric: true, value: (p) => Number(p.irritation) ? el('span', count(p.irritation), 'growth-badge danger') : '0' }
+        ], 'Chưa có đánh giá nào. Khách đánh giá trên trang thẻ thành viên sau khi mua tại quầy.');
+        rows('reviewTopicBody', overview.topics || [], [
+            { value: (t) => t.topic }, { numeric: true, value: (t) => count(t.reviews) }, { numeric: true, value: (t) => count(t.negative) }
+        ], 'Chưa có chủ đề nào.');
+        await loadReviewList();
+    }
+    async function loadReviewList() {
+        try {
+            const list = await api('/reviews?filter=' + encodeURIComponent($('reviewFilter').value));
+            $('reviewCount').textContent = count(list.length) + ' nhận xét';
+            rows('reviewBody', list, [
+                { value: (r) => new Date(r.updatedAt).toLocaleDateString('vi-VN') }, { value: (r) => r.productName }, { value: (r) => r.customerCode },
+                { value: (r) => el('span', starText(r.rating), 'review-stars-admin') },
+                { value: (r) => { const box = el('div', r.comment || '—', 'review-comment'); if (r.status === 'HIDDEN') box.classList.add('hidden-review'); return box; } },
+                { value: (r) => {
+                    const box = el('div');
+                    const [label, tone] = sentimentLabel[r.sentiment] || ['Chưa phân tích', 'warn'];
+                    box.append(el('span', label, 'growth-badge ' + tone));
+                    if (r.irritation) box.append(' ', el('span', 'Kích ứng da', 'growth-badge danger'));
+                    return box; } },
+                { value: (r) => r.topics || '—' },
+                { value: (r) => {
+                    const hidden = r.status === 'HIDDEN';
+                    const button = el('button', hidden ? 'Hiện lại' : 'Ẩn', 'button button-secondary button-small');
+                    button.type = 'button';
+                    button.addEventListener('click', async () => {
+                        button.disabled = true;
+                        try { await post('/reviews/' + r.id + '/status', { status: hidden ? 'VISIBLE' : 'HIDDEN' }); await loadReviews(); }
+                        catch (error) { notify('Chưa đổi được. ' + error.message, true); button.disabled = false; }
+                    });
+                    return button; } }
+            ], 'Không có nhận xét nào.');
+        } catch (error) { failed('reviewBody', 8, error.message); }
+    }
+    $('reviewFilter').addEventListener('change', loadReviewList);
+    $('analyzePending').addEventListener('click', async () => {
+        const button = $('analyzePending');
+        button.disabled = true;
+        try {
+            const result = await post('/reviews/analyze-pending');
+            notify(result.analyzed ? 'Đã phân tích ' + count(result.analyzed) + ' đánh giá.' : 'Dịch vụ phân tích AI chưa chạy. Hãy bật FastAPI rồi thử lại.', !result.analyzed);
+            await loadReviews();
+        } catch (error) { notify(error.message, true); }
+        finally { button.disabled = false; }
+    });
+
     // ---- Tab wiring -------------------------------------------------------------------------------
-    const loaders = { basket: loadBasket, stock: loadStock, experiments: loadExperiments };
+    const loaders = { basket: loadBasket, stock: loadStock, experiments: loadExperiments, reviews: loadReviews };
     const loaded = new Set();
     let current = 'overview';
     async function load(tab, force = false) {

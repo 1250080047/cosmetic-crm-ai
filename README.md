@@ -102,7 +102,7 @@ Lưu ý khi đọc: dữ liệu nền kết thúc năm 2021, nên **hôm nay** m
 
 | Thư mục | Nội dung |
 |---|---|
-| `entity/` | 22 lớp ánh xạ 22 bảng SQL (JPA): Customer, Order, OrderItem, Product, Strategy, Category, Role, User, Shift, CustomerSegment, ModelVersion, DriftCheck, StrategyHistory, MemberAccount, LoyaltyPoint, AssociationRun, ProductAssociation, StockReceipt, StockLot, OrderItemLot, CampaignExperiment, CampaignAssignment |
+| `entity/` | 23 lớp ánh xạ 23 bảng SQL (JPA): Customer, Order, OrderItem, Product, Strategy, Category, Role, User, Shift, CustomerSegment, ModelVersion, DriftCheck, StrategyHistory, MemberAccount, LoyaltyPoint, AssociationRun, ProductAssociation, StockReceipt, StockLot, OrderItemLot, CampaignExperiment, CampaignAssignment, ProductReview |
 | `repository/` | truy vấn JPA cho các bảng bán hàng dùng nhiều (khách, sản phẩm, hóa đơn, dòng hàng, ưu đãi) |
 | `service/`, `controller/` | nghiệp vụ và API; truy vấn thống kê viết SQL trực tiếp bằng `JdbcTemplate` |
 | `security/`, `dto/` | đăng nhập, phân quyền; dữ liệu trao đổi với trình duyệt và dịch vụ AI |
@@ -273,6 +273,24 @@ migration `004_inventory_lots.sql`, bảng `stock_receipts`, `stock_lots`, `orde
   **hạn dùng giả lập** (`is_demo = 1`, có nhãn DEMO trên trang): đa số còn 4–24 tháng, 8 lô sắp hết hạn, 4 lô (20 đơn vị) đã hết hạn
   để minh họa cảnh báo. Hàng nhập qua phiếu nhập dùng hạn dùng thật.
 
+## Đánh giá sản phẩm & phân tích cảm xúc
+
+Theo chương 10 (Text mining & sentiment) của sách *Essentials of Marketing Analytics*
+([sentiment_service.py](backend-pos/sentiment_service.py), [ReviewService](frontend-pos/src/main/java/com/example/PhanTichAI/service/ReviewService.java),
+migration `006_product_reviews.sql`):
+
+- **Khách** (trang thẻ thành viên → *Đánh giá sản phẩm đã mua*) chỉ đánh giá được sản phẩm **đã mua tại quầy**: 1–5 sao và nhận xét
+  ≤ 500 ký tự, mỗi sản phẩm một đánh giá (sửa được). Lần đánh giá đầu có nhận xét từ **20 ký tự** được **+10 điểm** (mỗi đánh giá
+  thưởng một lần, dòng điểm loại `BONUS`).
+- **Phân tích cảm xúc chạy ngay trên máy** (không gửi lời khách ra ngoài): từ điển khen/chê cho mỹ phẩm, đọc được cả khi gõ không dấu
+  (những từ dễ nhầm khi bỏ dấu như "rất/rát", "kém/kem", "hồng/hỏng/hông" chỉ được dùng trong cụm rõ nghĩa), hiểu phủ định
+  ("không thơm" là chê, "không bị kích ứng" là khen), từ nhấn mạnh ("rất", "quá"), kết hợp với số sao → Khen / Trung lập / Chê;
+  nhận chủ đề (mùi hương, giá, bao bì, hiệu quả, kết cấu, kích ứng da, phục vụ).
+- **Cảnh báo kích ứng da:** nhận xét nhắc dị ứng, kích ứng, nổi mẩn, ngứa, rát… luôn tính là chê và hiện cảnh báo cho quản lý.
+- Trang quản trị → tab **Đánh giá của khách**: số liệu, sản phẩm bị chê / báo kích ứng xếp đầu, chủ đề khách nhắc tới, danh sách nhận
+  xét (lọc chê / kích ứng / đã ẩn), **ẩn** nhận xét không phù hợp. POS hiện **★ điểm trung bình** của nhận xét đang hiện trên thẻ sản phẩm.
+- FastAPI tắt lúc khách gửi đánh giá: đánh giá vẫn được lưu, quản lý bấm *Phân tích đánh giá còn chờ* khi dịch vụ chạy lại.
+
 ## Kiểm thử
 
 ```powershell
@@ -284,6 +302,16 @@ mvn test
 
 Test quan trọng: `test_new_customers_never_move_the_ruler_or_the_base_groups` — thêm 400 khách chi tiêu rất lớn,
 mean/std/tâm nhóm và nhóm của 180 khách nền không đổi.
+
+**Kiểm thử trên SQL Server thật (không đổi dữ liệu):** bật Spring/FastAPI rồi chạy
+
+```powershell
+$env:POS_READ_ONLY_QA="1"; mvn test                         # + GrowthIntegrationTest, AdminReadOnlyIntegrationTest
+$env:POS_BROWSER_QA="1"; mvn test -Dtest=GrowthIntegrationTest  # + mở các màn hình mới bằng Chrome, ảnh trong target/growth-ui-qa
+```
+
+Đăng nhập nhân viên chỉ được giả lập trong ngữ cảnh test (không tạo tài khoản). Phần có ghi dữ liệu (thanh toán, đổi điểm, nhập/xuất
+kho, bật chiến lược, đánh giá) chạy trong giao dịch và được **hoàn tác** sau mỗi test.
 
 ## Cấu trúc
 

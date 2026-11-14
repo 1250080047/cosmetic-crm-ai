@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import create_engine
 
 import basket_service
+import sentiment_service
 from assistant_service import ChatStrategyRequest, ChatStrategyResponse, answer_request, requested_k
 from clustering_service import ClusterError, ClusterStore, StaleDeployment
 from customer_language import cashier_script as professional_cashier_script, segment_label
@@ -187,6 +188,17 @@ def recompute_associations(request: RecomputeRequest):
     if os.getenv("AI_READ_ONLY_PREVIEW") == "1":
         raise HTTPException(403, "Dịch vụ kiểm tra đang ở chế độ chỉ đọc.")
     return _basket(lambda: basket_service.compute(DB_ENGINE, request.user))
+
+
+# ---- product reviews: sentiment (runs locally, the text never leaves this computer) --------------
+class ReviewRequest(BaseModel):
+    text: str = Field(default="", max_length=1000)
+    rating: Optional[int] = Field(default=None, ge=1, le=5)
+
+
+@app.post("/api/ai/review-sentiment")
+def review_sentiment(request: ReviewRequest):
+    return sentiment_service.analyze(request.text, request.rating)
 
 
 # ---- assistant -----------------------------------------------------------------------------------
