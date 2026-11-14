@@ -43,7 +43,51 @@ public class Shift {
     @Column(name = "status", nullable = false, length = 10)
     private String status = OPEN;
 
+    /** Số tờ theo mệnh giá khi đếm tiền kết ca (JSON, VD {"500000":2,"10000":3}). */
+    @Column(name = "cash_breakdown", length = 400)
+    private String cashBreakdown;
+
+    /** Tiền mặt phải có lúc kết ca = đầu ca + bán tiền mặt + phiếu thu − phiếu chi. */
+    @Column(name = "expected_cash", precision = 14, scale = 2)
+    private BigDecimal expectedCash;
+
+    /** Đếm được − phải có (âm: thiếu, dương: dư). */
+    @Column(name = "cash_difference", precision = 14, scale = 2)
+    private BigDecimal cashDifference;
+
+    /** Lý do thu ngân ghi khi lệch quá ±10.000 đ. */
+    @Column(name = "discrepancy_reason", length = 500)
+    private String discrepancyReason;
+
+    /** NULL (không cần xác nhận), PENDING (chờ quản lý), RESOLVED (đã xác nhận). */
+    @Column(name = "review_status", length = 10)
+    private String reviewStatus;
+
+    /** STAFF_REPAY, STORE_EXPENSE, ADD_TO_FUND hoặc CORRECTED. */
+    @Column(name = "review_decision", length = 20)
+    private String reviewDecision;
+
+    @Column(name = "review_note", length = 500)
+    private String reviewNote;
+
+    /** users.id của quản lý / quản trị viên xác nhận. */
+    @Column(name = "reviewed_by")
+    private Integer reviewedBy;
+
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
+
     public Shift() {}
+
+    public String getCashBreakdown() { return cashBreakdown; }
+    public BigDecimal getExpectedCash() { return expectedCash; }
+    public BigDecimal getCashDifference() { return cashDifference; }
+    public String getDiscrepancyReason() { return discrepancyReason; }
+    public String getReviewStatus() { return reviewStatus; }
+    public String getReviewDecision() { return reviewDecision; }
+    public String getReviewNote() { return reviewNote; }
+    public Integer getReviewedBy() { return reviewedBy; }
+    public LocalDateTime getReviewedAt() { return reviewedAt; }
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }

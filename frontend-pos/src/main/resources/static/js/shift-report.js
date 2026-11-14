@@ -41,14 +41,35 @@
             .forEach(([label, value]) => { const box = el('div'); box.append(el('span', label), el('strong', value)); kpis.append(box); });
         wrap.append(kpis);
         wrap.append(el('h4', 'Tiền mặt trong két'));
-        const diff = cash.difference == null ? 'Chưa đếm' : fmt(cash.difference);
+        const diff = cash.difference == null ? 'Chưa đếm' : (Number(cash.difference) > 0 ? '+' : '') + fmt(cash.difference);
         const cashTable = table([['Khoản'], ['Số tiền', true]], [
-            [['Tiền đầu ca'], [fmt(cash.opening), true]], [['Thu tiền mặt trong ca'], [fmt(cash.cashSales), true]],
+            [['Tiền đầu ca'], [fmt(cash.opening), true]], [['Thu tiền mặt bán hàng'], [fmt(cash.cashSales), true]],
+            [['Phiếu thu tiền mặt trong ca'], ['+' + fmt(cash.cashIn || 0), true]], [['Phiếu chi tiền mặt trong ca'], ['−' + fmt(cash.cashOut || 0), true]],
             [['Tiền mặt phải có'], [fmt(cash.expected), true]], [['Tiền mặt đếm được'], [fmt(cash.counted), true]],
-            [['Chênh lệch'], [diff, true]]], '');
+            [['Chênh lệch (cho phép ±' + fmt(cash.tolerance || 10000) + ')'], [diff, true]]], '');
         if (cash.difference != null && Number(cash.difference) !== 0)
             cashTable.querySelector('tbody tr:last-child td:last-child').className = 'num ' + (Number(cash.difference) < 0 ? 'cash-diff-negative' : 'cash-diff-positive');
         wrap.append(cashTable);
+        if (cash.breakdown) {
+            try {
+                const notes = Object.entries(JSON.parse(cash.breakdown)).sort((a, b) => Number(b[0]) - Number(a[0]));
+                wrap.append(el('p', 'Đếm theo mệnh giá: ' + notes.map(([value, pieces]) => fmt(value) + ' × ' + pieces).join(' · '), 'shift-meta'));
+            } catch { /* old shifts have no breakdown */ }
+        }
+        const review = report.review || {};
+        if (review.status === 'PENDING')
+            wrap.append(el('p', '⏳ Chờ quản lý / quản trị viên xác nhận chênh lệch' + (review.reason ? ' · Lý do thu ngân ghi: “' + review.reason + '”' : ''), 'shift-review-pending'));
+        else if (review.status === 'RESOLVED')
+            wrap.append(el('p', '✔ Đã xác nhận: ' + (review.decisionLabel || review.decision) + (review.note ? ' · ' + review.note : '') +
+                (review.reviewedBy ? ' · ' + review.reviewedBy : '') + (review.reviewedAt ? ' lúc ' + time(review.reviewedAt) : '') +
+                (review.reason ? ' · Lý do thu ngân ghi: “' + review.reason + '”' : ''), 'shift-review-done'));
+        if ((report.movements || []).length)
+            wrap.append(el('h4', 'Phiếu thu / chi tiền mặt'), table([['Thời gian'], ['Loại'], ['Lý do'], ['Người lập'], ['Số tiền', true]],
+                report.movements.map((m) => [[time(m.createdAt)], [m.kind === 'IN' ? 'Thu vào két' : 'Chi ra khỏi két'], [m.reason], [m.createdBy || ''],
+                    [(m.kind === 'IN' ? '+' : '−') + fmt(m.amount), true]]), ''));
+        if ((report.paymentChanges || []).length)
+            wrap.append(el('h4', 'Sửa phương thức thanh toán khi đối soát'), table([['Hóa đơn'], ['Từ'], ['Thành'], ['Lý do'], ['Người sửa']],
+                report.paymentChanges.map((c) => [[c.transactionNo], [payments[c.oldMethod] || c.oldMethod], [payments[c.newMethod] || c.newMethod], [c.reason], [c.changedBy || '']]), ''));
         wrap.append(el('h4', 'Theo phương thức thanh toán'), table([['Phương thức'], ['Hóa đơn', true], ['Doanh thu', true]],
             report.payments.map((row) => [[payments[row.method] || row.method], [count(row.orders), true], [fmt(row.revenue), true]]),
             'Chưa có hóa đơn trong ca.'));
@@ -77,8 +98,10 @@
     function exportRevenue(report) {
         const s = report.summary, c = report.cash;
         const rows = [...header(report), ['Chỉ số', 'Giá trị'], ['Số hóa đơn', s.orders], ['Tạm tính', s.subtotal], ['Giảm giá', s.discount],
-            ['Doanh thu thực thu', s.revenue], ['Tiền đầu ca', c.opening], ['Thu tiền mặt', c.cashSales], ['Tiền mặt phải có', c.expected],
-            ['Tiền mặt đếm được', c.counted], ['Chênh lệch', c.difference], [], ['Phương thức', 'Hóa đơn', 'Doanh thu']];
+            ['Doanh thu thực thu', s.revenue], ['Tiền đầu ca', c.opening], ['Thu tiền mặt', c.cashSales], ['Phiếu thu', c.cashIn], ['Phiếu chi', c.cashOut],
+            ['Tiền mặt phải có', c.expected], ['Tiền mặt đếm được', c.counted], ['Chênh lệch', c.difference],
+            ['Đối soát', report.review?.status === 'PENDING' ? 'Chờ xác nhận' : report.review?.status === 'RESOLVED' ? report.review.decisionLabel : 'Không cần'],
+            [], ['Phương thức', 'Hóa đơn', 'Doanh thu']];
         report.payments.forEach((row) => rows.push([payments[row.method] || row.method, row.orders, row.revenue]));
         rows.push([], ['Mã hóa đơn', 'Thời gian', 'Mã khách', 'Tên khách', 'Thanh toán', 'Tạm tính', 'Giảm giá', 'Thực thu', 'Số quà']);
         report.orders.forEach((row) => rows.push([row.transactionNo, time(row.orderDate), row.customerCode, row.customerName,

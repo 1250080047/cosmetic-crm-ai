@@ -347,6 +347,66 @@ class GrowthIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM stock_lots WHERE quantity_remaining > 0 AND unit_cost IS NULL", Integer.class)).isZero();
     }
 
+    // ---- cash reconciliation at the end of a shift ---------------------------------------------------
+    @Autowired com.example.PhanTichAI.service.ShiftService shiftService;
+
+    private int cashierWithoutOpenShift() {
+        return jdbc.queryForObject("""
+                SELECT TOP 1 u.id FROM users u JOIN roles r ON r.id = u.role_id
+                WHERE r.name = 'CASHIER' AND NOT EXISTS (SELECT 1 FROM shifts s WHERE s.cashier_id = u.id AND s.status = 'OPEN') ORDER BY u.id""", Integer.class);
+    }
+
+    @Test @Transactional void cashShortBeyondTenThousandNeedsAReasonAndAManagerDecision() {
+        int cashier = cashierWithoutOpenShift();
+        int shift = ((Number) ((Map<?, ?>) shiftService.open(cashier, new java.math.BigDecimal("500000")).get("shift")).get("id")).intValue();
+        Integer product = jdbc.queryForObject("SELECT TOP 1 id FROM products WHERE is_active = 1 AND stock_quantity > 5 ORDER BY id", Integer.class);
+        CheckoutRequest sale = new CheckoutRequest();
+        CheckoutRequest.ItemDto item = new CheckoutRequest.ItemDto();
+        item.setProductId(product); item.setQuantity(1);
+        sale.setItems(List.of(item)); sale.setPaymentMethod("CASH");
+        var receipt = checkout.checkout(sale, cashier);
+        java.math.BigDecimal paid = (java.math.BigDecimal) receipt.get("final_amount");
+        entityManager.flush();
+        shiftService.addMovement(cashier, "OUT", new java.math.BigDecimal("20000"), "Chi mua nước uống");
+        assertThat(shiftService.expectedCash(shift)).isEqualByComparingTo(new java.math.BigDecimal("480000").add(paid));
+
+        // the drawer holds 500.000 đ: short by (paid − 20.000) đ, more than 10.000 đ
+        var notes = Map.of("500000", 1);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> shiftService.close(null, cashier, false, null, notes, null, null))
+                .hasMessageContaining("thiếu").hasMessageContaining("lý do");
+        var closed = shiftService.close(null, cashier, false, null, notes, null, "Thối nhầm tiền cho khách lúc 15h");
+        assertThat(((Map<?, ?>) closed.get("review")).get("status")).isEqualTo("PENDING");
+        assertThat(jdbc.queryForObject("SELECT cash_breakdown FROM shifts WHERE id = ?", String.class, shift)).isEqualTo("{\"500000\":1}");
+
+        // the manager finds the sale was paid by transfer: the drawer is now 20.000 đ over → only "add to the fund" fits
+        String invoice = (String) receipt.get("transaction_no");
+        var corrected = shiftService.correctPayment(invoice, "BANK_TRANSFER", "Khách chuyển khoản, bấm nhầm tiền mặt", cashier);
+        assertThat(((Map<?, ?>) corrected.get("cash")).get("difference")).isEqualTo(new java.math.BigDecimal("20000.00"));
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM order_payment_changes WHERE transaction_no = ?", Integer.class, invoice)).isEqualTo(1);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> shiftService.review(shift, cashier, "STAFF_REPAY", "Nhân viên bồi hoàn"))
+                .hasMessageContaining("không phù hợp");
+        var reviewed = shiftService.review(shift, cashier, "ADD_TO_FUND", "Đã kiểm tra, nộp 20.000 đ dư vào quỹ");
+        assertThat(((Map<?, ?>) reviewed.get("review")).get("status")).isEqualTo("RESOLVED");
+        assertThat(jdbc.queryForObject("SELECT cash_difference FROM shifts WHERE id = ?", java.math.BigDecimal.class, shift)).isEqualByComparingTo("20000");
+    }
+
+    @Test @Transactional void smallChangeWithinTenThousandClosesNormally() {
+        int cashier = cashierWithoutOpenShift();
+        shiftService.open(cashier, new java.math.BigDecimal("505000"));
+        var closed = shiftService.close(null, cashier, false, null, Map.of("500000", 1), null, null);   // 5.000 đ short
+        assertThat(((Map<?, ?>) closed.get("review")).get("status")).isNull();
+        assertThat(((Map<?, ?>) closed.get("cash")).get("withinTolerance")).isEqualTo(true);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> shiftService.close(null, cashier, false, null, null, null, null))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);   // nothing open any more
+    }
+
+    @Test void managerSeesShiftsWithDifferencesAndPendingReviews() throws Exception {
+        JsonNode shifts = get("/api/admin/shifts");
+        assertThat(shifts.path("tolerance").asInt()).isEqualTo(10000);
+        assertThat(shifts.has("pending")).isTrue();
+        assertThat(shifts.path("discrepancies").isArray()).isTrue();
+    }
+
     @Test void managerSeesReviewOverviewAndList() throws Exception {
         assertThat(get("/api/admin/reviews/overview").path("summary").has("reviews")).isTrue();
         assertThat(get("/api/admin/reviews?filter=irritation").isArray()).isTrue();

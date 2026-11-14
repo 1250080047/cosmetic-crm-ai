@@ -247,7 +247,9 @@ public class PosApiController {
 
     // ---- Shifts -------------------------------------------------------------------------------
     public record OpenShiftRequest(BigDecimal openingCash) {}
-    public record CloseShiftRequest(BigDecimal countedCash, String note) {}
+    /** {@code breakdown}: notes counted per denomination ("500000" → 2); {@code reason}: required beyond ±10.000 đ. */
+    public record CloseShiftRequest(BigDecimal countedCash, String note, Map<String, Integer> breakdown, String reason) {}
+    public record CashMovementRequest(String kind, BigDecimal amount, String reason) {}
 
     @GetMapping("/shift")
     public Map<String, Object> currentShift(@AuthenticationPrincipal StoreUser user) {
@@ -264,7 +266,15 @@ public class PosApiController {
 
     @PostMapping("/shift/close")
     public ResponseEntity<?> closeShift(@RequestBody(required = false) CloseShiftRequest req, @AuthenticationPrincipal StoreUser user) {
-        return handle(() -> shifts.close(null, user.getId(), false, req == null ? null : req.countedCash(), req == null ? null : req.note()));
+        return handle(() -> shifts.close(null, user.getId(), false, req == null ? null : req.countedCash(),
+                req == null ? null : req.breakdown(), req == null ? null : req.note(), req == null ? null : req.reason()));
+    }
+
+    /** Cash brought into / taken out of the drawer during the shift, with a reason (counts in the expected cash). */
+    @PostMapping("/shift/cash-movements")
+    public ResponseEntity<?> cashMovement(@RequestBody CashMovementRequest req, @AuthenticationPrincipal StoreUser user) {
+        return handle(() -> shifts.addMovement(user.getId(), req == null ? null : req.kind(), req == null ? null : req.amount(),
+                req == null ? null : req.reason()));
     }
 
     @GetMapping("/shift/{id}/report")

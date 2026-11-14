@@ -91,6 +91,50 @@ try {
     }
     await delay(400); await shot('pos-suggestions.png');
 
+    // POS end of shift: the drawer is counted by denomination. The open shift is a stub answered inside the browser
+    // (no request reaches the server, nothing is written); the confirm button is never pressed.
+    await evaluate(`(() => {
+        const now = new Date().toISOString();
+        const fake = { success: true, open: { shift: { id: 999, status: 'OPEN', openedAt: now, cashierName: 'Thu ngân thử', username: 'thu' },
+            summary: { orders: 1, revenue: 120000, subtotal: 120000, discount: 0, members: 0, walkIns: 1 },
+            payments: [{ method: 'CASH', orders: 1, revenue: 120000 }],
+            cash: { opening: 500000, cashSales: 120000, cashIn: 0, cashOut: 20000, expected: 600000, counted: null, difference: null, tolerance: 10000,
+                    denominations: [500000, 200000, 100000, 50000, 20000, 10000, 5000, 2000, 1000, 500] },
+            movements: [{ kind: 'OUT', amount: 20000, reason: 'Chi mua nước uống', createdAt: now, createdBy: 'Thu ngân thử' }],
+            review: {}, paymentChanges: [], gifts: [], giftTotals: { units: 0, retailValue: 0 }, products: [], orders: [] } };
+        const real = window.fetch;
+        window.fetch = (url, options = {}) => String(url).endsWith('/api/pos/shift') && !options.method
+            ? Promise.resolve(new Response(JSON.stringify(fake), { headers: { 'Content-Type': 'application/json' } })) : real(url, options);
+        document.getElementById('closeShiftButton').click();
+        return true; })()`);
+    await wait('!document.getElementById("shiftCloseForm").hidden && document.querySelectorAll("#cashCountGrid input").length === 10');
+    await evaluate(`(() => { const set = (value, pieces) => { const input = document.querySelector('#cashCountGrid input[data-denomination="' + value + '"]');
+        input.value = pieces; input.dispatchEvent(new Event('input')); };
+        set(500000, 1); set(50000, 1); set(20000, 1); return true; })()`);   // 570.000 đ counted, 600.000 đ expected → 30.000 đ short
+    report.posCashCount = await evaluate('({ counted: document.getElementById("cashCounted").textContent, difference: document.getElementById("cashDiff").textContent, reasonAsked: !document.getElementById("cashReasonGroup").hidden })');
+    if (!report.posCashCount.reasonAsked) throw new Error('A 30.000 đ shortage must ask for a reason.');
+    await evaluate('document.querySelector(".shift-close-form").scrollIntoView();true');
+    await delay(300); await shot('pos-close-shift.png');
+    await evaluate(`(() => { const input = document.querySelector('#cashCountGrid input[data-denomination="20000"]'); input.value = 2; input.dispatchEvent(new Event('input')); return true; })()`);
+    report.posSmallDifferenceAsksReason = await evaluate('!document.getElementById("cashReasonGroup").hidden');   // 590.000 đ: 10.000 đ short, within the tolerance
+    if (report.posSmallDifferenceAsksReason) throw new Error('A 10.000 đ difference is within the tolerance.');
+
+    // admin: a shift waiting for review shows the manager's two steps
+    await send('Page.navigate', { url: base + '/admin' });
+    await wait('window.storeUser?.role==="ADMIN"');
+    await clickTab('shifts'); await wait('document.querySelectorAll("#shiftBody tr").length > 0 && document.querySelectorAll("#shiftDiscrepancyBody tr").length > 0');
+    const reviewIndex = await evaluate('[...document.querySelectorAll("#shiftBody button")].findIndex((b) => b.textContent === "Đối soát")');
+    report.adminPendingShifts = reviewIndex >= 0;
+    await shot('admin-shifts.png');
+    if (reviewIndex >= 0) {
+        await evaluate('[...document.querySelectorAll("#shiftBody button")].find((b) => b.textContent === "Đối soát").click();true');
+        await wait('!!document.querySelector("#workspaceDialog .shift-review-box")');
+        report.reviewOptions = await evaluate('[...document.querySelectorAll("#workspaceDialog .shift-review-box select")].at(-1).options.length');
+        await evaluate('document.querySelector("#workspaceDialog .shift-review-box").scrollIntoView();true');
+        await delay(300); await shot('admin-shift-review.png');
+        await evaluate('document.getElementById("closeWorkspaceDialog").click();true');
+    }
+
     // the member page (signed out) renders on a phone without errors
     await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
     await send('Page.navigate', { url: base + '/member' }); await wait('!document.getElementById("authView").hidden');

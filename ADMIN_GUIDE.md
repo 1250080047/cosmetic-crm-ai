@@ -105,10 +105,25 @@ Tài khoản tạo thêm trên giao diện vẫn cần mật khẩu từ 10 ký 
 ## Ca làm việc tại POS
 
 - Thu ngân phải **mở ca** (nhập tiền mặt đầu ca) trước khi thanh toán; máy chủ từ chối hóa đơn khi người bán chưa có ca mở. Mỗi hóa đơn lưu `cashier_id` và `shift_id`.
-- **Báo cáo ca**: số hóa đơn, tạm tính, giảm giá, thực thu; doanh thu theo phương thức (tiền mặt, chuyển khoản, thẻ; hóa đơn QR cũ tính vào chuyển khoản); tiền mặt phải có = đầu ca + thu tiền mặt, so với tiền đếm được → chênh lệch; quà tặng đã phát theo giá niêm yết lúc bán (`order_items.list_price`); sản phẩm bán nhiều; danh sách hóa đơn.
-- **Kết ca**: nhập tiền mặt đếm được và ghi chú; sau khi kết ca phải mở ca mới để bán tiếp. Mỗi nhân viên chỉ có một ca mở tại một thời điểm.
+- **Báo cáo ca**: số hóa đơn, tạm tính, giảm giá, thực thu; doanh thu theo phương thức (tiền mặt, chuyển khoản, thẻ; hóa đơn QR cũ tính vào chuyển khoản); tiền mặt phải có, đếm được, chênh lệch; phiếu thu/chi; quà tặng đã phát theo giá niêm yết lúc bán (`order_items.list_price`); sản phẩm bán nhiều; danh sách hóa đơn.
+- **Phiếu thu / chi tiền mặt trong ca** (nút *Thu/chi tiền mặt* trên thanh ca ở POS): lấy tiền ra khỏi két (mua nước, nộp về két chính) hoặc bỏ thêm vào (nhận tiền lẻ) phải ghi số tiền và lý do; không chi quá số tiền đang có trong két.
+- **Kết ca = đối soát tiền mặt**: thu ngân **bắt buộc đếm két theo mệnh giá** (500.000 … 500 đ, máy tự cộng).
+  **Tiền mặt phải có = tiền đầu ca + bán tiền mặt + phiếu thu − phiếu chi**. Chênh lệch = đếm được − phải có.
+  - Lệch trong **±10.000 đ** (tiền lẻ): kết ca bình thường, ghi là *Khớp*.
+  - Lệch **quá ±10.000 đ**: thu ngân **phải ghi lý do** (≥ 10 ký tự); ca vẫn kết (không bán thêm được) nhưng ở trạng thái
+    **Chờ xác nhận**.
+- **Xác nhận chênh lệch (chỉ quản lý và quản trị viên)** — trang quản trị → *Ca làm việc* → nút **Đối soát**:
+  1. Nếu nguyên nhân là **bấm nhầm phương thức thanh toán** (VD khách chuyển khoản mà bấm tiền mặt): sửa lại, ghi lý do. Lịch sử sửa
+     lưu trong `order_payment_changes` (ai sửa, lúc nào, từ phương thức nào sang phương thức nào); chênh lệch được tính lại.
+  2. Chọn **cách xử lý** phù hợp với chênh lệch còn lại và ghi chú: *thiếu* → nhân viên bồi hoàn hoặc cửa hàng chịu (ghi chi phí);
+     *dư* → nộp vào quỹ (thu khác); hết lệch → *đã tìm ra nguyên nhân và sửa*. Hệ thống chỉ ghi nhận quyết định, không tự trừ tiền ai;
+     việc bồi hoàn theo nội quy cửa hàng và quy định lao động.
+- Trang *Ca làm việc* có bảng **chênh lệch theo nhân viên** (số ca lệch quá ngưỡng, tổng thiếu, tổng dư, ca chờ xác nhận, số lần bồi hoàn)
+  để phát hiện người thường xuyên lệch tiền, và bộ lọc *Đối soát* (chờ xác nhận / đã xác nhận).
+- Sau khi kết ca phải mở ca mới để bán tiếp. Mỗi nhân viên chỉ có một ca mở tại một thời điểm.
 
-Sản phẩm và giá lấy từ OnlineSales (giá trung vị quy đổi 25.600 đ/USD, làm tròn nghìn đồng); nhóm hàng gán theo từ khóa. Giá vốn không có trong dữ liệu gốc nên để trống: báo cáo không tính lợi nhuận và trợ lý AI không được nhận định về lợi nhuận.
+Sản phẩm và giá lấy từ OnlineSales (giá trung vị quy đổi 25.600 đ/USD, làm tròn nghìn đồng); nhóm hàng gán theo từ khóa. Giá gốc
+không có trong dữ liệu gốc nên được gán tự động bằng 55–70% giá bán (migration 007) để tính lợi nhuận gộp.
 
 ## Đọc số liệu doanh thu
 

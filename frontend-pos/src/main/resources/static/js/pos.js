@@ -526,6 +526,7 @@
             : 'Chưa mở ca';
         $('openShiftButton').hidden = open;
         $('shiftReportButton').hidden = !open;
+        $('cashMovementButton').hidden = !open;
         $('closeShiftButton').hidden = !open;
         renderCart();
     }
@@ -559,17 +560,66 @@
         $('shiftReportTitle').textContent = closing ? 'Kết ca — kiểm tra trước khi xác nhận' : 'Báo cáo ca đang mở';
         ShiftReport.render($('shiftReportBody'), state.report);
         $('shiftCloseForm').hidden = !closing;
-        $('countedCash').value = closing ? String(Math.round(Number(state.report.cash.expected) || 0)) : '';
+        if (closing) buildCashCount(state.report.cash);
         $('shiftNote').value = '';
+        $('cashReason').value = '';
         $('shiftReportModal').style.display = 'flex';
     }
+
+    // ---- Counting the drawer by denomination; beyond ±10.000 đ a reason is required ------------------
+    function buildCashCount(cash) {
+        const grid = $('cashCountGrid');
+        grid.replaceChildren();
+        (cash.denominations || [500000, 200000, 100000, 50000, 20000, 10000, 5000, 2000, 1000, 500]).forEach((value) => {
+            const row = node('label', 'cash-count-row');
+            const input = node('input');
+            input.type = 'number'; input.min = '0'; input.step = '1'; input.inputMode = 'numeric'; input.dataset.denomination = String(value);
+            input.setAttribute('aria-label', 'Số tờ ' + money(value));
+            input.addEventListener('input', updateCashCount);
+            row.append(node('span', '', money(value)), input, node('span', 'cash-count-subtotal', '0 ₫'));
+            grid.append(row);
+        });
+        $('cashExpected').textContent = money(cash.expected);
+        $('cashToleranceNote').textContent = 'Lệch trong khoảng ±' + money(cash.tolerance || 10000) + ' (tiền lẻ): kết ca bình thường. Lệch nhiều hơn: ghi lý do, ca chờ quản lý xác nhận.';
+        updateCashCount();
+    }
+    function cashBreakdown() {
+        const breakdown = {};
+        document.querySelectorAll('#cashCountGrid input').forEach((input) => {
+            const pieces = Math.max(0, Math.floor(Number(input.value) || 0));
+            if (pieces) breakdown[input.dataset.denomination] = pieces;
+        });
+        return breakdown;
+    }
+    function updateCashCount() {
+        let counted = 0;
+        document.querySelectorAll('#cashCountGrid input').forEach((input) => {
+            const subtotal = Math.max(0, Math.floor(Number(input.value) || 0)) * Number(input.dataset.denomination);
+            input.parentElement.querySelector('.cash-count-subtotal').textContent = money(subtotal);
+            counted += subtotal;
+        });
+        const expected = Number(state.report?.cash?.expected) || 0, tolerance = Number(state.report?.cash?.tolerance) || 10000;
+        const difference = counted - expected;
+        $('cashCounted').textContent = money(counted);
+        $('cashDiff').textContent = (difference > 0 ? '+' : '') + money(difference) + (difference < 0 ? ' (thiếu)' : difference > 0 ? ' (dư)' : '');
+        $('cashDiff').className = Math.abs(difference) > tolerance ? 'cash-diff-negative' : difference ? 'cash-diff-positive' : '';
+        $('cashReasonGroup').hidden = Math.abs(difference) <= tolerance;
+        return { counted, difference, tolerance };
+    }
     async function confirmCloseShift() {
-        const counted = $('countedCash').value === '' ? null : Number($('countedCash').value);
-        if (!confirm('Kết thúc ca? Sau khi kết ca bạn cần mở ca mới để bán tiếp.')) return;
+        const { counted, difference, tolerance } = updateCashCount();
+        if (!Object.keys(cashBreakdown()).length && !confirm('Két không có tiền mặt nào (0 đ)? Bấm OK nếu đúng là két trống.')) return;
+        if (Math.abs(difference) > tolerance && $('cashReason').value.trim().length < 10) {
+            alert('Tiền mặt ' + (difference < 0 ? 'thiếu ' : 'dư ') + money(Math.abs(difference)) + ', quá ±' + money(tolerance) +
+                '. Hãy ghi lý do (ít nhất 10 ký tự); ca sẽ chờ quản lý xác nhận.');
+            $('cashReason').focus(); return;
+        }
+        if (!confirm('Kết thúc ca với ' + money(counted) + ' tiền mặt đếm được' + (difference ? ' (' + (difference > 0 ? 'dư ' : 'thiếu ') + money(Math.abs(difference)) + ')' : '') +
+            '? Sau khi kết ca bạn cần mở ca mới để bán tiếp.')) return;
         const button = $('confirmCloseShift');
         button.disabled = true;
         try {
-            state.report = await post('/api/pos/shift/close', { countedCash: counted, note: $('shiftNote').value });
+            state.report = await post('/api/pos/shift/close', { breakdown: cashBreakdown(), note: $('shiftNote').value, reason: $('cashReason').value });
             state.shift = null;
             $('shiftReportTitle').textContent = 'Báo cáo kết ca #' + state.report.shift.id;
             ShiftReport.render($('shiftReportBody'), state.report);
@@ -586,6 +636,25 @@
         state.category = button.dataset.category;
         document.querySelectorAll('.cat-btn').forEach((entry) => entry.classList.toggle('active', entry === button));
         renderProductGrid();
+    });
+    // Cash brought in / taken out of the drawer during the shift
+    $('cashMovementButton').addEventListener('click', () => {
+        $('cashMovementAmount').value = ''; $('cashMovementReason').value = ''; $('cashMovementKind').value = 'OUT';
+        $('cashMovementModal').style.display = 'flex'; $('cashMovementAmount').focus();
+    });
+    $('cancelCashMovement').addEventListener('click', () => { $('cashMovementModal').style.display = 'none'; });
+    $('saveCashMovement').addEventListener('click', async () => {
+        const button = $('saveCashMovement'), kind = $('cashMovementKind').value, amount = Number($('cashMovementAmount').value);
+        if (!(amount > 0)) { alert('Nhập số tiền.'); return; }
+        if ($('cashMovementReason').value.trim().length < 3) { alert('Ghi lý do thu / chi.'); return; }
+        button.disabled = true;
+        try {
+            state.shift = await post('/api/pos/shift/cash-movements', { kind, amount, reason: $('cashMovementReason').value });
+            $('cashMovementModal').style.display = 'none';
+            renderShift();
+            alert('Đã lưu phiếu ' + (kind === 'OUT' ? 'chi ' : 'thu ') + money(amount) + '. Tiền mặt phải có trong két: ' + money(state.shift.cash.expected) + '.');
+        } catch (error) { alert('Chưa lưu được phiếu. ' + error.message); }
+        finally { button.disabled = false; }
     });
     $('redeemSelect').addEventListener('change', (event) => { state.redeem = Number(event.target.value) || 0; renderCart(); });
     $('memberLinkButton').addEventListener('click', () => openMemberModal());

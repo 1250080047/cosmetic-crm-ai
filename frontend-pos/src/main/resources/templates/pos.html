@@ -315,7 +315,7 @@
         <span class="header-badge">AI CLUSTERING INTEGRATED</span>
     </div>
     <div style="font-size: 13px;"><a href="/admin" data-management-only hidden>Quản trị cửa hàng · </a>Quầy bán hàng</div>
-<div class="shift-bar" id="shiftBar"><span class="shift-status" id="shiftStatus">Đang kiểm tra ca…</span><button type="button" class="shift-btn" id="openShiftButton" hidden>Mở ca</button><button type="button" class="shift-btn" id="shiftReportButton" hidden>Báo cáo ca</button><button type="button" class="shift-btn shift-close" id="closeShiftButton" hidden>Kết ca</button></div>
+<div class="shift-bar" id="shiftBar"><span class="shift-status" id="shiftStatus">Đang kiểm tra ca…</span><button type="button" class="shift-btn" id="openShiftButton" hidden>Mở ca</button><button type="button" class="shift-btn" id="cashMovementButton" hidden>Thu/chi tiền mặt</button><button type="button" class="shift-btn" id="shiftReportButton" hidden>Báo cáo ca</button><button type="button" class="shift-btn shift-close" id="closeShiftButton" hidden>Kết ca</button></div>
 <div style="display:flex;align-items:center;gap:12px;font-size:12px;flex-wrap:wrap"><span data-profile-name></span><a href="/admin" data-management-only hidden style="color:white">Quản trị</a><form th:action="@{/logout}" method="post"><button type="submit" style="padding:6px 12px;cursor:pointer">Đăng xuất</button></form></div></header>
 
 <div class="main-layout">
@@ -537,13 +537,38 @@
     </div>
 </div>
 
+<!-- MODAL PHIẾU THU / CHI TIỀN MẶT TRONG CA -->
+<div id="cashMovementModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="cashMovementTitle">
+    <div class="new-cust-card">
+        <h3 style="margin-top:0" id="cashMovementTitle">💵 Phiếu thu / chi tiền mặt</h3>
+        <p style="font-size:13px;color:#475569">Lấy tiền ra khỏi két hoặc bỏ thêm tiền vào két trong ca thì ghi lại ở đây, để khi kết ca tiền mặt phải có được tính đúng.</p>
+        <div class="form-group"><label for="cashMovementKind">Loại:</label>
+            <select id="cashMovementKind"><option value="OUT">Chi ra khỏi két</option><option value="IN">Thu vào két</option></select></div>
+        <div class="form-group"><label for="cashMovementAmount">Số tiền (đ):</label><input type="number" id="cashMovementAmount" min="1000" step="1000"></div>
+        <div class="form-group"><label for="cashMovementReason">Lý do:</label><input type="text" id="cashMovementReason" maxlength="200" list="cashMovementReasons" placeholder="VD: Chi mua nước uống cho cửa hàng"></div>
+        <datalist id="cashMovementReasons"><option value="Chi mua nước uống cho cửa hàng"><option value="Nộp bớt tiền về két chính"><option value="Nhận thêm tiền lẻ để thối"><option value="Chi mua văn phòng phẩm"></datalist>
+        <div style="display:flex;gap:8px;margin-top:18px">
+            <button type="button" class="modal-secondary" id="cancelCashMovement">Hủy</button>
+            <button type="button" class="modal-primary" id="saveCashMovement">Lưu phiếu</button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL BÁO CÁO CA -->
 <div id="shiftReportModal" class="modal">
     <div class="shift-report-card">
         <div class="shift-report-head"><h3 id="shiftReportTitle">Báo cáo ca</h3><button type="button" class="modal-secondary" id="closeShiftReport">Đóng</button></div>
         <div id="shiftReportBody"></div>
         <div id="shiftCloseForm" class="shift-close-form" hidden>
-            <div class="form-group"><label for="countedCash">Tiền mặt đếm được khi kết ca (đ):</label><input type="number" id="countedCash" min="0" step="1000"></div>
+            <strong>Đếm tiền mặt trong két theo mệnh giá</strong>
+            <div class="cash-count-grid" id="cashCountGrid"></div>
+            <div class="cash-count-summary">
+                <div>Tiền mặt phải có<strong id="cashExpected">0 đ</strong></div>
+                <div>Đếm được<strong id="cashCounted">0 đ</strong></div>
+                <div>Chênh lệch<strong id="cashDiff">0 đ</strong></div>
+            </div>
+            <p class="cash-tolerance-note" id="cashToleranceNote">Lệch trong khoảng ±10.000 đ (tiền lẻ): kết ca bình thường. Lệch nhiều hơn: ghi lý do, ca chờ quản lý xác nhận.</p>
+            <div class="form-group" id="cashReasonGroup" hidden><label for="cashReason">Lý do chênh lệch (bắt buộc, ít nhất 10 ký tự):</label><textarea id="cashReason" rows="2" maxlength="500" placeholder="VD: Thối nhầm cho khách 50.000 đ lúc 15h; khách chuyển khoản nhưng bấm nhầm tiền mặt…"></textarea></div>
             <div class="form-group"><label for="shiftNote">Ghi chú (tùy chọn):</label><input type="text" id="shiftNote" maxlength="500"></div>
             <button type="button" class="modal-primary danger" id="confirmCloseShift">Xác nhận kết ca</button>
         </div>

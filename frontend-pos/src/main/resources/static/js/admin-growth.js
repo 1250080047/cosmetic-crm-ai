@@ -399,6 +399,71 @@
         }
     }
 
+    // ---- Cash reconciliation of a shift waiting for review (managers and admins) ----------------
+    const methods = { CASH: 'Tiền mặt', BANK_TRANSFER: 'Chuyển khoản', CARD: 'Thẻ' };
+    function shiftReview(container, report, reload) {
+        const box = el('section', null, 'shift-review-box no-print');
+        const cash = report.cash, diff = cash.difference == null ? null : Number(cash.difference);
+        box.append(el('h3', 'Đối soát tiền mặt — chờ xác nhận'));
+        box.append(el('p', diff == null ? 'Thu ngân chưa đếm tiền khi kết ca. Hãy kiểm tra lại két rồi ghi nhận.'
+            : 'Chênh lệch hiện tại: ' + (diff > 0 ? '+' : '') + money(diff) + ' (' + (diff < 0 ? 'thiếu' : 'dư') + ') so với tiền mặt phải có ' + money(cash.expected) +
+              '. Ngưỡng cho phép ±' + money(cash.tolerance) + '.', 'growth-note'));
+        if (report.review.reason) box.append(el('p', 'Lý do thu ngân ghi: “' + report.review.reason + '”', 'shift-review-reason'));
+
+        // 1. a payment method entered by mistake (e.g. the customer paid by transfer but "cash" was pressed)
+        const fix = el('form', null, 'growth-form');
+        fix.append(el('h4', '1. Sửa phương thức thanh toán bấm nhầm (nếu có)'));
+        const row = el('div', null, 'form-row');
+        const order = document.createElement('select'), method = document.createElement('select'), why = document.createElement('input');
+        (report.orders || []).forEach((o) => order.add(new Option(o.transactionNo.slice(-12) + ' · ' + new Date(o.orderDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) +
+            ' · ' + (methods[o.paymentMethod] || o.paymentMethod) + ' · ' + money(o.revenue), o.transactionNo)));
+        Object.entries(methods).forEach(([value, label]) => method.add(new Option('Đổi thành: ' + label, value)));
+        why.placeholder = 'Lý do (VD: khách chuyển khoản, bấm nhầm tiền mặt)'; why.maxLength = 300;
+        const field = (label, input) => { const wrap = el('label', label); wrap.append(input); return wrap; };
+        row.append(field('Hóa đơn', order), field('Phương thức đúng', method), field('Lý do', why));
+        const fixButton = el('button', 'Sửa phương thức', 'button button-secondary button-small'); fixButton.type = 'submit';
+        fix.append(row, fixButton);
+        fix.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!order.value) return;
+            fixButton.disabled = true;
+            try {
+                await post('/shifts/orders/' + encodeURIComponent(order.value) + '/payment-method', { method: method.value, reason: why.value });
+                notify('Đã sửa phương thức thanh toán, chênh lệch được tính lại.');
+                await reload();
+            } catch (error) { notify(error.message, true); fixButton.disabled = false; }
+        });
+        if ((report.orders || []).length) box.append(fix);
+        if ((report.paymentChanges || []).length) {
+            const list = el('ul', null, 'growth-note');
+            report.paymentChanges.forEach((c) => list.append(el('li', c.transactionNo + ': ' + (methods[c.oldMethod] || c.oldMethod) + ' → ' + (methods[c.newMethod] || c.newMethod) +
+                ' · ' + c.reason + ' · ' + (c.changedBy || '') + ' ' + new Date(c.changedAt).toLocaleString('vi-VN'))));
+            box.append(el('p', 'Đã sửa trong lần đối soát này:', 'growth-note'), list);
+        }
+
+        // 2. the decision
+        const decide = el('form', null, 'growth-form');
+        decide.append(el('h4', '2. Xác nhận cách xử lý'));
+        const choice = document.createElement('select'), note = document.createElement('textarea');
+        (report.review.options || []).forEach((o) => choice.add(new Option(o.label, o.value)));
+        note.rows = 2; note.maxLength = 500; note.placeholder = 'Đã kiểm tra gì, quyết định thế nào (VD: Đã xem camera, thối nhầm 50.000 đ; nhân viên bồi hoàn trong ca sau)';
+        const decideRow = el('div', null, 'form-row');
+        decideRow.append(field('Cách xử lý', choice), field('Ghi chú xác nhận', note));
+        const confirm = el('button', 'Xác nhận đối soát', 'button button-primary button-small'); confirm.type = 'submit';
+        decide.append(decideRow, confirm);
+        decide.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            confirm.disabled = true;
+            try {
+                await post('/shifts/' + report.shift.id + '/review', { decision: choice.value, note: note.value });
+                notify('Đã xác nhận đối soát ca #' + report.shift.id + '.');
+                await reload();
+            } catch (error) { notify(error.message, true); confirm.disabled = false; }
+        });
+        box.append(decide);
+        container.append(box);
+    }
+
     // ---- Tab wiring -------------------------------------------------------------------------------
     const loaders = { basket: loadBasket, stock: loadStock, experiments: loadExperiments, reviews: loadReviews, revenue: loadProfit };
     const loaded = new Set();
@@ -407,7 +472,7 @@
         if (!loaders[tab] || (!force && loaded.has(tab))) return;
         try { await loaders[tab](); loaded.add(tab); } catch { /* the tab shows the error */ }
     }
-    window.AdminGrowth = { register(tab, loader) { loaders[tab] = loader; }, reload(tab) { loaded.delete(tab); return load(tab, true); },
+    window.AdminGrowth = { register(tab, loader) { loaders[tab] = loader; }, reload(tab) { loaded.delete(tab); return load(tab, true); }, shiftReview,
         el, api, post, stat, rows, failed, notify, money, count, percent, normalized };
     document.addEventListener('admin-tab', (event) => { current = event.detail; load(current); });
     document.addEventListener('admin-refresh', () => { loaded.clear(); load(current, true); });

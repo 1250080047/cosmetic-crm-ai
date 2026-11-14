@@ -158,6 +158,7 @@ def create(cur, count: int) -> None:
     cur.execute("""UPDATE s SET counted_cash = s.opening_cash + COALESCE((SELECT SUM(o.final_amount) FROM orders o
                                                                         WHERE o.shift_id = s.id AND o.payment_method = 'CASH'), 0)
                    FROM shifts s WHERE s.note = ?""", NOTE)
+    cur.execute("UPDATE shifts SET expected_cash = counted_cash, cash_difference = 0 WHERE note = ?", NOTE)   # the drawer matched
     revenue = f"{totals['revenue']:,.0f}".replace(",", ".")
     print(f"Đã tạo {totals['orders']} hóa đơn trong {len(shifts)} ca, {totals['units']} sản phẩm, doanh thu {revenue} đ, "
           f"cộng {totals['points']} điểm, {totals['suggested']} món thêm từ gợi ý.")

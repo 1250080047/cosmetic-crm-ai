@@ -102,7 +102,7 @@ Lưu ý khi đọc: dữ liệu nền kết thúc năm 2021, nên **hôm nay** m
 
 | Thư mục | Nội dung |
 |---|---|
-| `entity/` | 23 lớp ánh xạ 23 bảng SQL (JPA): Customer, Order, OrderItem, Product, Strategy, Category, Role, User, Shift, CustomerSegment, ModelVersion, DriftCheck, StrategyHistory, MemberAccount, LoyaltyPoint, AssociationRun, ProductAssociation, StockReceipt, StockLot, OrderItemLot, CampaignExperiment, CampaignAssignment, ProductReview |
+| `entity/` | 25 lớp ánh xạ 25 bảng SQL (JPA): Customer, Order, OrderItem, Product, Strategy, Category, Role, User, Shift, CustomerSegment, ModelVersion, DriftCheck, StrategyHistory, MemberAccount, LoyaltyPoint, AssociationRun, ProductAssociation, StockReceipt, StockLot, OrderItemLot, CampaignExperiment, CampaignAssignment, ProductReview, ShiftCashMovement, OrderPaymentChange |
 | `repository/` | truy vấn JPA cho các bảng bán hàng dùng nhiều (khách, sản phẩm, hóa đơn, dòng hàng, ưu đãi) |
 | `service/`, `controller/` | nghiệp vụ và API; truy vấn thống kê viết SQL trực tiếp bằng `JdbcTemplate` |
 | `security/`, `dto/` | đăng nhập, phân quyền; dữ liệu trao đổi với trình duyệt và dịch vụ AI |
@@ -173,6 +173,10 @@ quà là sản phẩm đang bán còn kho, không nói về lợi nhuận khi ch
   sẵn trong `static/js/vendor/` nên không cần mạng. Máy quét mã USB loại 2D cũng dùng được với ô tra cứu.
 - Tiền giảm tại quầy **chỉ** đến từ ưu đãi đã duyệt của nhóm khách; không có ô giảm tay. Máy chủ tự tính lại tổng tiền và từ chối hóa đơn có số tiền khác.
 - Thanh toán **Tiền mặt, Chuyển khoản hoặc Thẻ**. **Kết ca** có báo cáo, in và xuất CSV doanh thu/quà tặng.
+- **Đối soát tiền mặt cuối ca** (migration `008_shift_cash_review.sql`): đếm két theo mệnh giá; tiền phải có = đầu ca + bán tiền mặt +
+  phiếu thu − phiếu chi trong ca; lệch quá **±10.000 đ** thì thu ngân ghi lý do và ca chờ **quản lý hoặc quản trị viên** xác nhận (sửa
+  phương thức thanh toán bấm nhầm có lưu lịch sử; thiếu → nhân viên bồi hoàn / cửa hàng chịu; dư → nộp quỹ). Chi tiết trong
+  [ADMIN_GUIDE.md](ADMIN_GUIDE.md#ca-làm-việc-tại-pos).
 
 ## Thẻ thành viên & tích điểm (trang cho khách)
 

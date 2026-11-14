@@ -190,13 +190,17 @@
     });
     async function loadShifts(){
         try{
-            const query=new URLSearchParams();if($('shiftFrom').value)query.set('from',$('shiftFrom').value);if($('shiftTo').value)query.set('to',$('shiftTo').value);if($('shiftCashier').value)query.set('cashierId',$('shiftCashier').value);
+            const query=new URLSearchParams();if($('shiftFrom').value)query.set('from',$('shiftFrom').value);if($('shiftTo').value)query.set('to',$('shiftTo').value);if($('shiftCashier').value)query.set('cashierId',$('shiftCashier').value);if($('shiftReview').value)query.set('review',$('shiftReview').value);
             const data=await api('/shifts?'+query);
             const previous=$('shiftCashier').value;$('shiftCashier').replaceChildren(new Option('Tất cả',''));data.cashiers.forEach(c=>$('shiftCashier').add(new Option(c.fullName+' ('+c.username+')',c.id)));$('shiftCashier').value=previous;
             $('shiftCount').textContent=count(data.items.length)+' ca'+(data.items.length>=200?' (200 ca gần nhất)':'');
-            table('shiftBody',data.items,[{value:r=>'#'+r.id},{value:r=>r.cashierName+' ('+r.username+')'},{value:r=>date(r.openedAt)},{value:r=>r.closedAt?date(r.closedAt):'—'},{numeric:true,value:r=>count(r.orders)},{numeric:true,value:r=>money(r.revenue)},{numeric:true,value:r=>money(r.cashRevenue)},{value:r=>el('span',r.status==='OPEN'?'Đang mở':'Đã kết ca',r.status==='OPEN'?'stock-warning':'payment-badge')},{value:r=>{const button=el('button','Xem báo cáo','button button-secondary button-small');button.addEventListener('click',()=>openShift(r.id));return button;}}],'Chưa có ca làm việc nào. Nhân viên mở ca tại quầy POS.');
+            $('shiftPendingNote').hidden=!data.pending;$('shiftPendingNote').textContent='⚠ Có '+count(data.pending)+' ca lệch tiền mặt quá ±'+count(data.tolerance)+' đ đang chờ xác nhận. Mở ca để xem lý do của thu ngân và xác nhận cách xử lý.';
+            const diffCell=r=>{if(r.cashDifference==null)return r.status==='OPEN'?'—':'Chưa đếm';const v=Number(r.cashDifference);const span=el('span',(v>0?'+':'')+money(v),Math.abs(v)>Number(data.tolerance)?'cash-diff-negative':'');return span;};
+            const reviewCell=r=>r.reviewStatus==='PENDING'?el('span','Chờ xác nhận','stock-warning'):r.reviewStatus==='RESOLVED'?el('span','Đã xác nhận','payment-badge'):(r.status==='OPEN'?'—':'Khớp');
+            table('shiftBody',data.items,[{value:r=>'#'+r.id},{value:r=>r.cashierName+' ('+r.username+')'},{value:r=>date(r.openedAt)},{value:r=>r.closedAt?date(r.closedAt):'—'},{numeric:true,value:r=>count(r.orders)},{numeric:true,value:r=>money(r.revenue)},{numeric:true,value:r=>money(r.cashRevenue)},{numeric:true,value:diffCell},{value:reviewCell},{value:r=>el('span',r.status==='OPEN'?'Đang mở':'Đã kết ca',r.status==='OPEN'?'stock-warning':'payment-badge')},{value:r=>{const button=el('button',r.reviewStatus==='PENDING'?'Đối soát':'Xem báo cáo','button '+(r.reviewStatus==='PENDING'?'button-primary':'button-secondary')+' button-small');button.addEventListener('click',()=>openShift(r.id));return button;}}],'Chưa có ca làm việc nào. Nhân viên mở ca tại quầy POS.');
+            table('shiftDiscrepancyBody',data.discrepancies||[],[{value:r=>r.cashierName+' ('+r.username+')'},{numeric:true,value:r=>count(r.shifts)},{numeric:true,value:r=>count(r.outsideTolerance)},{numeric:true,value:r=>Number(r.shortage)?el('span',money(r.shortage),'cash-diff-negative'):money(0)},{numeric:true,value:r=>money(r.surplus)},{numeric:true,value:r=>Number(r.pending)?el('span',count(r.pending),'stock-warning'):'0'},{numeric:true,value:r=>count(r.repaid)}],'Chưa có ca nào kết thúc.');
             state.loaded.add('shifts');
-        }catch(error){tableError('shiftBody',9,error.message);}
+        }catch(error){tableError('shiftBody',11,error.message);}
     }
     async function openShift(id){
         const body=openDialog('Báo cáo ca #'+id);body.append(el('p','Đang tải báo cáo…'));
@@ -218,9 +222,10 @@
                 actions.append(close);
             }
             body.append(actions);
+            if(report.review?.status==='PENDING'&&window.AdminGrowth?.shiftReview)window.AdminGrowth.shiftReview(body,report,async()=>{await loadShifts();await openShift(id);});
         }catch(error){body.replaceChildren(el('p',error.message,'form-error'));}
     }
-    ['shiftFrom','shiftTo','shiftCashier'].forEach(id=>$(id).addEventListener('change',loadShifts));
+    ['shiftFrom','shiftTo','shiftCashier','shiftReview'].forEach(id=>$(id).addEventListener('change',loadShifts));
     async function loadTab(tab,force=false){
         if(!force&&state.loaded.has(tab))return;
         if(tab==='revenue')await initRevenue();if(tab==='products')await loadProducts();if(tab==='customers')await initCustomers();if(tab==='users')await loadUsers();if(tab==='shifts')await loadShifts();
