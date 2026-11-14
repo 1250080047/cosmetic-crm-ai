@@ -243,8 +243,71 @@
     });
     $('lotSearch').addEventListener('input', () => { clearTimeout(stock.lotTimer); stock.lotTimer = setTimeout(loadLots, 300); });
 
+    // ---- Offer results against a control group --------------------------------------------------
+    const verdictClass = { EFFECTIVE: 'ok', NEGATIVE: 'danger', NO_DIFFERENCE: 'muted', INSUFFICIENT: 'warn' };
+    const points = (value) => value == null ? '—' : (value * 100).toLocaleString('vi-VN', { maximumFractionDigits: 1, minimumFractionDigits: 1 }) + ' điểm %';
+    function comparison(data) {
+        const box = el('div', null, 'experiment-result');
+        const table = el('table');
+        const head = el('thead'), headRow = el('tr');
+        ['Phía', 'Số khách', 'Quay lại mua', 'Tỉ lệ quay lại', 'Chi tiêu TB / khách'].forEach((label, i) => headRow.append(el('th', label, i ? 'numeric' : '')));
+        head.append(headRow);
+        const body = el('tbody');
+        [['Nhận ưu đãi (90%)', data.offer], ['Nhóm đối chứng (10%)', data.control]].forEach(([label, arm]) => {
+            const tr = el('tr');
+            tr.append(el('td', label), el('td', count(arm.customers), 'numeric'), el('td', count(arm.returned), 'numeric'),
+                el('td', percent(arm.rate, 1), 'numeric'), el('td', data.simulated ? '—' : money(arm.spend_per_customer), 'numeric'));
+            body.append(tr);
+        });
+        table.append(head, body);
+        const scroll = el('div', null, 'table-scroll'); scroll.append(table);
+        const a = data.analysis;
+        const verdict = el('p', a.message, 'experiment-verdict ' + (verdictClass[a.verdict] || 'muted'));
+        const facts = el('p', 'Chênh lệch: ' + points(a.difference) + (a.ci_low != null ? ' · khoảng tin cậy 95%: ' + points(a.ci_low) + ' → ' + points(a.ci_high) : '') +
+            (a.p_value != null ? ' · p = ' + Number(a.p_value).toLocaleString('vi-VN', { maximumFractionDigits: 4 }) : ''), 'growth-note');
+        const need = el('p', 'Để phát hiện chênh lệch 5 điểm % (từ ' + percent(a.needed_base_rate, 1) + ') với độ tin cậy 95% và độ mạnh 80%, cần khoảng ' +
+            count(a.needed_per_arm_for_5_points) + ' khách ở MỖI phía (nhóm đối chứng 10% → nhóm khoảng ' + count(a.needed_per_arm_for_5_points * 10) + ' khách).', 'growth-note');
+        box.append(scroll, verdict, facts, need);
+        return box;
+    }
+    async function loadExperiments() {
+        const data = await api('/experiments');
+        const list = $('experimentList');
+        list.replaceChildren();
+        const experiments = data.experiments || [];
+        $('experimentCaption').textContent = experiments.length
+            ? count(experiments.length) + ' lần đo gần nhất · nhóm đối chứng ' + data.control_percent + '% · đo trong ' + data.window_days + ' ngày.'
+            : 'Chưa có lần đo nào. Bật một chiến lược ở tab Chiến lược ưu đãi để bắt đầu đo.';
+        experiments.forEach((experiment) => {
+            const card = el('section', null, 'card');
+            const heading = el('div', null, 'card-heading'), left = el('div');
+            const title = el('h2', experiment.title + ' ');
+            title.append(el('span', experiment.running ? 'Đang đo · ngày ' + Math.min(experiment.days_measured, experiment.windowDays) + '/' + experiment.windowDays
+                : 'Đã kết thúc', 'growth-badge ' + (experiment.running ? 'ok' : 'muted')));
+            left.append(title, el('p', 'Bắt đầu ' + new Date(experiment.startedAt).toLocaleString('vi-VN') + (experiment.startedBy ? ' · ' + experiment.startedBy : '') +
+                (experiment.endedAt ? ' · kết thúc ' + new Date(experiment.endedAt).toLocaleString('vi-VN') : '') + ' · ' + count(experiment.cohortSize) + ' khách trong nhóm' +
+                (experiment.window_complete ? '' : ' · kết quả tạm thời, chưa đủ ' + experiment.windowDays + ' ngày'), 'muted'));
+            heading.append(left);
+            card.append(heading, comparison(experiment));
+            list.append(card);
+        });
+    }
+    $('simulationForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target, button = $('simulateButton');
+        button.disabled = true;
+        try {
+            const data = await post('/experiments/simulate', {
+                groupSize: Number(form.elements.groupSize.value), baseRate: Number(form.elements.baseRate.value) / 100,
+                uplift: Number(form.elements.uplift.value) / 100 });
+            const result = $('simulationResult');
+            result.replaceChildren(el('p', 'MÔ PHỎNG với số liệu giả định — không phải kết quả của cửa hàng. Mỗi lần chạy cho kết quả hơi khác do ngẫu nhiên.', 'growth-warning'), comparison(data));
+        } catch (error) { notify('Chưa chạy được mô phỏng. ' + error.message, true); }
+        finally { button.disabled = false; }
+    });
+
     // ---- Tab wiring -------------------------------------------------------------------------------
-    const loaders = { basket: loadBasket, stock: loadStock };
+    const loaders = { basket: loadBasket, stock: loadStock, experiments: loadExperiments };
     const loaded = new Set();
     let current = 'overview';
     async function load(tab, force = false) {

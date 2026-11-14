@@ -21,3 +21,9 @@
 .growth-form .form-error { margin: 0; color: #b42318; font-size: 13px; }
 .growth-form .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 .growth-line > button { align-self: end; margin-bottom: 2px; }
+.experiment-result { display: grid; gap: 6px; }
+.experiment-verdict { margin: 6px 0 0; padding: 10px 12px; border-radius: 8px; font-weight: 600; font-size: 13.5px; }
+.experiment-verdict.ok { background: #e7f6ec; color: #1f7a3d; }
+.experiment-verdict.warn { background: #fff4db; color: #7a4a00; }
+.experiment-verdict.danger { background: #fde8e8; color: #b42318; }
+.experiment-verdict.muted { background: #eef2f6; color: #3c4a5c; }

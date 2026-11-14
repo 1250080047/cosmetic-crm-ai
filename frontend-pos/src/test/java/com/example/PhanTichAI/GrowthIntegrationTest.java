@@ -206,6 +206,68 @@ class GrowthIntegrationTest {
             assertThat(product.path("stockQuantity").asInt()).isEqualTo(sellable.getOrDefault(product.path("id").asInt(), 0));
     }
 
+    // ---- 4. offers measured against a control group --------------------------------------------------
+    @Autowired com.example.PhanTichAI.service.ExperimentService experiments;
+    @Autowired com.example.PhanTichAI.service.CustomerOfferService offers;
+    @Autowired com.example.PhanTichAI.service.MemberService members;
+    @Autowired com.example.PhanTichAI.repository.StrategyRepository strategyRepository;
+    @Autowired com.example.PhanTichAI.repository.CustomerRepository customerRepository;
+
+    @Test @Transactional void switchingAnOfferOnKeepsTenPercentWithoutItAndStopsWhenSwitchedOff() {
+        var strategy = strategyRepository.findAll().stream()
+                .filter(s -> s.getSegmentId() != null && jdbc.queryForObject("SELECT COUNT(*) FROM customers WHERE segment_id = ?", Integer.class, s.getSegmentId()) >= 100)
+                .findFirst().orElseThrow();
+        jdbc.update("UPDATE strategies SET is_active = 1, discount_percent = 7 WHERE id = ?", strategy.getId());   // rolled back
+        entityManager.clear();
+        strategy = strategyRepository.findById(strategy.getId()).orElseThrow();
+        Integer experiment = experiments.start(strategy, "kiểm tra");
+        int cohort = jdbc.queryForObject("SELECT COUNT(*) FROM customers WHERE segment_id = ?", Integer.class, strategy.getSegmentId());
+        int assigned = jdbc.queryForObject("SELECT COUNT(*) FROM campaign_assignments WHERE experiment_id = ?", Integer.class, experiment);
+        int control = jdbc.queryForObject("SELECT COUNT(*) FROM campaign_assignments WHERE experiment_id = ? AND arm = 'CONTROL'", Integer.class, experiment);
+        assertThat(assigned).isEqualTo(cohort);
+        assertThat((double) control / cohort).isBetween(0.05, 0.15);
+
+        Integer controlCustomer = jdbc.queryForObject("SELECT TOP 1 customer_id FROM campaign_assignments WHERE experiment_id = ? AND arm = 'CONTROL' ORDER BY customer_id", Integer.class, experiment);
+        Integer offerCustomer = jdbc.queryForObject("SELECT TOP 1 customer_id FROM campaign_assignments WHERE experiment_id = ? AND arm = 'OFFER' ORDER BY customer_id", Integer.class, experiment);
+        var withoutOffer = offers.forCustomer(customerRepository.findById(controlCustomer).orElseThrow());
+        var withOffer = offers.forCustomer(customerRepository.findById(offerCustomer).orElseThrow());
+        if (withoutOffer.clusterId() == strategy.getSegmentId()) {   // the model places the customer in the same group today
+            assertThat(withoutOffer.controlGroup()).isTrue();
+            assertThat(withoutOffer.strategyId()).isNull();
+            assertThat(withoutOffer.discountPercent()).isEqualByComparingTo("0");
+        }
+        if (withOffer.clusterId() == strategy.getSegmentId()) {
+            assertThat(withOffer.controlGroup()).isFalse();
+            assertThat(withOffer.discountPercent()).isEqualByComparingTo("7");
+        }
+        assertThat(members.card(controlCustomer).get("offer")).as("the control customer's card shows no offer").isNull();
+        assertThat(members.card(offerCustomer).get("offer")).isNotNull();
+
+        var results = experiments.results();
+        assertThat(results).first().satisfies(row -> {
+            assertThat(row.get("running")).isEqualTo(true);
+            assertThat(((Map<?, ?>) row.get("analysis")).get("verdict")).isEqualTo("INSUFFICIENT");   // nobody came back yet
+        });
+        experiments.end(strategy.getId());
+        assertThat(experiments.inControl(strategy.getId(), controlCustomer)).isFalse();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM campaign_experiments WHERE id = ? AND ended_at IS NOT NULL", Integer.class, experiment)).isEqualTo(1);
+    }
+
+    @Test void managerSeesExperimentResultsAndASimulation() throws Exception {
+        assertThat(get("/api/admin/experiments").path("experiments").isArray()).isTrue();
+        String body = "{\"groupSize\":3000,\"baseRate\":0.1,\"uplift\":0.05,\"seed\":42}";
+        var login = client.send(HttpRequest.newBuilder(URI.create(base() + "/admin")).GET().build(), HttpResponse.BodyHandlers.ofString());
+        var token = Pattern.compile("name=\"_csrf\" content=\"([^\"]+)\"").matcher(login.body());
+        assertThat(token.find()).isTrue();
+        var response = client.send(HttpRequest.newBuilder(URI.create(base() + "/api/admin/experiments/simulate"))
+                .header("Content-Type", "application/json").header("X-CSRF-TOKEN", token.group(1))
+                .POST(HttpRequest.BodyPublishers.ofString(body)).build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(response.statusCode()).as(response.body()).isEqualTo(200);
+        JsonNode simulation = mapper.readTree(response.body());
+        assertThat(simulation.path("simulated").asBoolean()).isTrue();
+        assertThat(simulation.path("control").path("customers").asInt()).isEqualTo(300);
+    }
+
     @Test @Transactional void productAddedFromASuggestionIsMarkedOnTheInvoice() {
         Integer product = jdbc.queryForObject("SELECT TOP 1 id FROM products WHERE is_active = 1 AND stock_quantity > 5 ORDER BY id", Integer.class);
         CheckoutRequest request = new CheckoutRequest();

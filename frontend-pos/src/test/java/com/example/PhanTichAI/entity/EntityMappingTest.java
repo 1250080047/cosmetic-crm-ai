@@ -32,7 +32,7 @@ class EntityMappingTest {
     void everyTableHasOneEntityWithTheSameColumns() throws Exception {
         Map<String, Set<String>> schema = schemaColumns();
         Map<String, Set<String>> entities = entityColumns();
-        assertThat(schema).hasSize(20);
+        assertThat(schema).hasSize(22);
         assertThat(entities.keySet()).containsExactlyInAnyOrderElementsOf(schema.keySet());
         schema.forEach((table, columns) ->
                 assertThat(entities.get(table)).as("columns of " + table).containsExactlyInAnyOrderElementsOf(columns));

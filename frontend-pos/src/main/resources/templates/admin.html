@@ -53,6 +53,7 @@
             <button class="nav-item active" data-tab="overview" aria-current="page"><svg class="icon"><use href="#i-grid"/></svg><span>Tổng quan</span></button>
             <button class="nav-item" data-tab="model"><svg class="icon"><use href="#i-spark"/></svg><span>Mô hình phân cụm</span></button>
             <button class="nav-item" data-tab="strategies"><svg class="icon"><use href="#i-target"/></svg><span>Chiến lược ưu đãi</span></button>
+            <button class="nav-item" data-tab="experiments"><svg class="icon"><use href="#i-target"/></svg><span>Hiệu quả ưu đãi</span></button>
             <button class="nav-item" data-tab="basket"><svg class="icon"><use href="#i-basket"/></svg><span>Gợi ý mua kèm</span></button>
             <button class="nav-item" data-tab="orders"><svg class="icon"><use href="#i-receipt"/></svg><span>Lịch sử hóa đơn</span></button>
             <button class="nav-item" data-tab="revenue"><svg class="icon"><use href="#i-wallet"/></svg><span>Doanh thu & so sánh</span></button>
@@ -145,6 +146,32 @@
                 </div>
             </section>
 
+            <section id="tab-experiments" class="tab-panel" hidden aria-label="Hiệu quả ưu đãi">
+                <section class="card">
+                    <div class="card-heading"><div><h2>Ưu đãi có làm khách quay lại không?</h2><p class="muted" id="experimentCaption">Đang đọc kết quả đo…</p></div></div>
+                    <details class="growth-explain" open>
+                        <summary>Cách đo (nhóm đối chứng)</summary>
+                        <ul>
+                            <li>Khi bạn <strong>bật</strong> một chiến lược ở tab Chiến lược ưu đãi, khách đang thuộc nhóm đó được chia ngẫu nhiên (cố định theo mã khách): <strong>90% nhận ưu đãi</strong>, <strong>10% không nhận</strong> (nhóm đối chứng). Thu ngân thấy ghi chú khi gặp khách nhóm đối chứng; trang thẻ của họ không hiện ưu đãi.</li>
+                            <li>Trong <strong>30 ngày</strong>, so tỉ lệ khách của mỗi bên quay lại mua tại quầy. Nếu nhóm nhận ưu đãi quay lại nhiều hơn rõ rệt (kiểm định hai tỉ lệ, p &lt; 0,05) thì ưu đãi có hiệu quả.</li>
+                            <li>Tắt chiến lược (hoặc áp dụng phân cụm khác) là kết thúc lần đo. Ít khách quá thì trang báo “chưa đủ dữ liệu” và cho biết cần khoảng bao nhiêu khách.</li>
+                        </ul>
+                    </details>
+                </section>
+                <div id="experimentList"></div>
+                <section class="card">
+                    <div class="card-heading"><div><h2>Mô phỏng <span class="growth-badge warn">MÔ PHỎNG — không phải dữ liệu thật</span></h2><p class="muted">Xem một lần đo trông thế nào khi đã đủ khách, với các con số bạn giả định. Không lưu gì vào cơ sở dữ liệu.</p></div></div>
+                    <form id="simulationForm" class="growth-form">
+                        <div class="form-row">
+                            <label>Số khách của nhóm<input name="groupSize" type="number" value="3000" min="20" max="1000000" step="1" required></label>
+                            <label>Tỉ lệ quay lại của nhóm đối chứng (%)<input name="baseRate" type="number" value="10" min="0" max="90" step="0.5" required></label>
+                            <label>Ưu đãi làm tăng thêm (điểm %)<input name="uplift" type="number" value="5" min="-50" max="50" step="0.5" required></label>
+                        </div>
+                        <div class="dialog-actions"><button type="submit" class="button button-primary" id="simulateButton">Chạy mô phỏng</button></div>
+                    </form>
+                    <div id="simulationResult"></div>
+                </section>
+            </section>
             <section id="tab-basket" class="tab-panel" hidden aria-label="Gợi ý mua kèm">
                 <div class="stats-grid" id="basketStats"></div>
                 <section class="card">

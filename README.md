@@ -102,7 +102,7 @@ Lưu ý khi đọc: dữ liệu nền kết thúc năm 2021, nên **hôm nay** m
 
 | Thư mục | Nội dung |
 |---|---|
-| `entity/` | 20 lớp ánh xạ 20 bảng SQL (JPA): Customer, Order, OrderItem, Product, Strategy, Category, Role, User, Shift, CustomerSegment, ModelVersion, DriftCheck, StrategyHistory, MemberAccount, LoyaltyPoint, AssociationRun, ProductAssociation, StockReceipt, StockLot, OrderItemLot |
+| `entity/` | 22 lớp ánh xạ 22 bảng SQL (JPA): Customer, Order, OrderItem, Product, Strategy, Category, Role, User, Shift, CustomerSegment, ModelVersion, DriftCheck, StrategyHistory, MemberAccount, LoyaltyPoint, AssociationRun, ProductAssociation, StockReceipt, StockLot, OrderItemLot, CampaignExperiment, CampaignAssignment |
 | `repository/` | truy vấn JPA cho các bảng bán hàng dùng nhiều (khách, sản phẩm, hóa đơn, dòng hàng, ưu đãi) |
 | `service/`, `controller/` | nghiệp vụ và API; truy vấn thống kê viết SQL trực tiếp bằng `JdbcTemplate` |
 | `security/`, `dto/` | đăng nhập, phân quyền; dữ liệu trao đổi với trình duyệt và dịch vụ AI |
@@ -242,6 +242,21 @@ Control*: 60 hóa đơn mua chung, confidence 65%, lift 89,9.
 - **POS:** khi thêm hàng vào giỏ, khung **🛍️ Khách hay mua kèm** hiện tối đa 3 sản phẩm còn hàng có confidence cao nhất, kèm lý do;
   bấm **+ Thêm** để đưa vào hóa đơn. Dòng hóa đơn thêm từ gợi ý được đánh dấu `order_items.from_suggestion = 1`.
 - **Đo hiệu quả:** tab Gợi ý mua kèm cho biết bao nhiêu hóa đơn tại quầy có món từ gợi ý, số lượng và doanh thu từ gợi ý.
+
+## Đo hiệu quả ưu đãi (nhóm đối chứng)
+
+Câu hỏi: **ưu đãi có thật sự làm khách quay lại không?** ([ExperimentService](frontend-pos/src/main/java/com/example/PhanTichAI/service/ExperimentService.java),
+migration `005_campaign_experiments.sql`).
+
+- Khi quản lý **bật** một chiến lược, mọi khách đang thuộc nhóm đó được chia ngẫu nhiên — cố định theo mã khách (SHA-256 của
+  "lần đo:mã khách") — thành **90% nhận ưu đãi** và **10% nhóm đối chứng**. Khách nhóm đối chứng không được giảm giá/tặng quà tại quầy
+  (thu ngân thấy ghi chú) và trang thẻ của họ không hiện ưu đãi. **Tắt** chiến lược (hoặc áp dụng phân cụm khác) là kết thúc lần đo.
+- Trang quản trị → tab **Hiệu quả ưu đãi**: trong **30 ngày** so tỉ lệ quay lại mua tại quầy và chi tiêu trung bình của hai phía;
+  kiểm định hai tỉ lệ (z-test), khoảng tin cậy 95% của chênh lệch, kết luận bằng lời: *có hiệu quả / chưa thấy khác biệt / làm giảm /
+  chưa đủ dữ liệu* (cần ≥ 30 khách nhóm đối chứng và ≥ 10 lượt quay lại). Trang cho biết cần bao nhiêu khách để phát hiện chênh lệch
+  5 điểm % (VD từ 10% lên 15%: khoảng 686 khách mỗi phía).
+- Hiện cửa hàng mới có vài khách mua tại quầy nên kết quả thật sẽ là "chưa đủ dữ liệu". Khung **Mô phỏng** (ghi rõ *MÔ PHỎNG — không
+  phải dữ liệu thật*, không lưu gì) cho xem một lần đo trông thế nào với số khách và tỉ lệ bạn giả định.
 
 ## Kho theo lô & hạn sử dụng
 

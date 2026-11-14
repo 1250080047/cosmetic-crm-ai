@@ -23,9 +23,16 @@ public class AdminStrategyController {
     private final StrategyRepository strategies;
     private final JdbcTemplate jdbc;
     private final ObjectMapper json;
+    private final com.example.PhanTichAI.service.ExperimentService experiments;
 
     public AdminStrategyController(StrategyRepository strategies, JdbcTemplate jdbc, ObjectMapper json) {
-        this.strategies = strategies; this.jdbc = jdbc; this.json = json;
+        this(strategies, jdbc, json, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AdminStrategyController(StrategyRepository strategies, JdbcTemplate jdbc, ObjectMapper json,
+                                   com.example.PhanTichAI.service.ExperimentService experiments) {
+        this.strategies = strategies; this.jdbc = jdbc; this.json = json; this.experiments = experiments;
     }
 
     public record StrategyView(Integer id, Integer segmentId, String title, BigDecimal discountPercent,
@@ -98,9 +105,12 @@ public class AdminStrategyController {
         public void setExpectedUpdatedAt(LocalDateTime value) { expectedUpdatedAt = value; }
     }
 
+    public ResponseEntity<?> updateStrategy(Integer segmentId, UpdateStrategyDto dto) { return updateStrategy(segmentId, dto, null); }
+
     @PutMapping("/{segmentId}")
     @Transactional
-    public ResponseEntity<?> updateStrategy(@PathVariable Integer segmentId, @RequestBody UpdateStrategyDto dto) {
+    public ResponseEntity<?> updateStrategy(@PathVariable Integer segmentId, @RequestBody UpdateStrategyDto dto,
+                                            @org.springframework.security.core.annotation.AuthenticationPrincipal com.example.PhanTichAI.security.StoreUser user) {
         validate(dto);
         lockDeployment("Exclusive");
         ActiveState active = activeState();
@@ -119,9 +129,15 @@ public class AdminStrategyController {
         strategy.setDiscountPercent(dto.getDiscountPercent());
         strategy.setGiftDescription(dto.getGiftDescription());
         strategy.setCashierScript(CustomerLanguage.cashierScript(dto.getCashierScript(), dto.getDiscountPercent(), dto.getGiftDescription()));
+        boolean wasActive = Boolean.TRUE.equals(strategy.getIsActive());
         if (dto.getIsActive() != null) strategy.setIsActive(dto.getIsActive());
         strategy.setUpdatedAt(LocalDateTime.now());
         strategies.save(strategy);
+        // Switching an offer on starts measuring it against a 10% control group; switching it off stops measuring.
+        boolean nowActive = Boolean.TRUE.equals(strategy.getIsActive());
+        if (experiments != null && !wasActive && nowActive)
+            experiments.start(strategy, user == null ? "" : user.getFullName() + " (" + user.getUsername() + ")");
+        if (experiments != null && wasActive && !nowActive) experiments.end(strategy.getId());
         return ResponseEntity.ok(Map.of("success", true, "message", "Đã lưu ưu đãi cho " + names.get(0),
                 "data", present(strategy, names.get(0), segmentId + 1, active)));
     }

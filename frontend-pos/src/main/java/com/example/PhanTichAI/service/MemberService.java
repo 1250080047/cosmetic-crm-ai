@@ -212,6 +212,8 @@ public class MemberService {
                 SELECT s.title, s.discount_percent AS discountPercent, s.gift_description AS gift
                 FROM customers c JOIN strategies s ON s.segment_id=c.segment_id AND s.is_active=1
                 WHERE c.customer_id=?
+                  AND NOT EXISTS (SELECT 1 FROM campaign_assignments a JOIN campaign_experiments e ON e.id=a.experiment_id
+                                  WHERE e.strategy_id=s.id AND e.ended_at IS NULL AND a.customer_id=c.customer_id AND a.arm='CONTROL')
                 """, customerId);
         if (rows.isEmpty()) return null;
         Map<String, Object> offer = new LinkedHashMap<>(rows.get(0));

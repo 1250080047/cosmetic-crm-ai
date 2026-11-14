@@ -27,17 +27,24 @@ public class CustomerOfferService {
     private final StrategyRepository strategies;
     private final ProductRepository products;
     private final JdbcTemplate jdbc;
+    private final ExperimentService experiments;
 
     public CustomerOfferService(AiIntegrationService aiService, StrategyRepository strategies, ProductRepository products) {
-        this(aiService, strategies, products, null);
+        this(aiService, strategies, products, null, null);
+    }
+
+    public CustomerOfferService(AiIntegrationService aiService, StrategyRepository strategies, ProductRepository products, JdbcTemplate jdbc) {
+        this(aiService, strategies, products, jdbc, null);
     }
 
     @Autowired
-    public CustomerOfferService(AiIntegrationService aiService, StrategyRepository strategies, ProductRepository products, JdbcTemplate jdbc) {
+    public CustomerOfferService(AiIntegrationService aiService, StrategyRepository strategies, ProductRepository products, JdbcTemplate jdbc,
+                                ExperimentService experiments) {
         this.aiService = aiService;
         this.strategies = strategies;
         this.products = products;
         this.jdbc = jdbc;
+        this.experiments = experiments;
     }
 
     /** L = days since first purchase, R = days since last purchase, F/M = invoices/money in the last 365 days. */
@@ -48,9 +55,15 @@ public class CustomerOfferService {
         }
     }
 
+    /** {@code controlGroup}: the customer is in the 10% kept without the offer to measure whether it works. */
     public record Offer(Integer strategyId, int clusterId, String segment, String color,
                         BigDecimal discountPercent, String giftDescription, String cashierScript,
-                        List<Product> giftProducts, int giftQuantityLimit, boolean aiAvailable) {}
+                        List<Product> giftProducts, int giftQuantityLimit, boolean aiAvailable, boolean controlGroup) {
+        public Offer(Integer strategyId, int clusterId, String segment, String color, BigDecimal discountPercent, String giftDescription,
+                     String cashierScript, List<Product> giftProducts, int giftQuantityLimit, boolean aiAvailable) {
+            this(strategyId, clusterId, segment, color, discountPercent, giftDescription, cashierScript, giftProducts, giftQuantityLimit, aiAvailable, false);
+        }
+    }
 
     @Transactional(readOnly = true)
     public Offer forCustomer(Customer customer) {
@@ -59,6 +72,10 @@ public class CustomerOfferService {
         Strategy stored = ai.getCluster_id() >= 0
                 ? strategies.findBySegmentId(ai.getCluster_id()).filter(s -> Boolean.TRUE.equals(s.getIsActive())).orElse(null)
                 : null;
+        // Control group of the running experiment: no discount, no gift — that is how the offer's effect is measured.
+        boolean control = stored != null && experiments != null && customer.getCustomerId() != null
+                && experiments.inControl(stored.getId(), customer.getCustomerId());
+        if (control) stored = null;
         BigDecimal discount = stored != null && stored.getDiscountPercent() != null ? stored.getDiscountPercent() : BigDecimal.ZERO;
         if (discount.signum() < 0 || discount.compareTo(new BigDecimal("100")) > 0)
             throw new IllegalArgumentException("Mức giảm trong chiến lược chưa hợp lệ. Vui lòng kiểm tra trang quản trị.");
@@ -68,7 +85,7 @@ public class CustomerOfferService {
         String script = CustomerLanguage.cashierScript(stored == null ? "" : stored.getCashierScript(), discount, gift);
         return new Offer(stored == null ? null : stored.getId(), ai.getCluster_id(),
                 CustomerLanguage.segment(ai.getSegment_name()), ai.getColor_code(), discount, gift, script,
-                eligible, GiftMatcher.quantityLimit(gift), ai.getCluster_id() != -100);
+                eligible, GiftMatcher.quantityLimit(gift), ai.getCluster_id() != -100, control);
     }
 
     /** Group after a sale, computed from the values measured before the sale plus this invoice. No benefit lookup. */

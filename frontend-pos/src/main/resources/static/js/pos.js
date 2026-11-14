@@ -315,7 +315,9 @@
         box.replaceChildren();
         if (!state.customer) { box.append(node('p', '', 'Tra cứu khách hàng để xem ưu đãi đã được lưu trong hệ thống.')); return; }
         const offer = state.customer;
-        box.append(node('p', 'offer-discount', offer.offer_available ? 'Ưu đãi hiện có: giảm ' + state.discount + '%' : 'Nhóm khách này chưa có ưu đãi đang bật.'));
+        box.append(node('p', 'offer-discount', offer.offer_available ? 'Ưu đãi hiện có: giảm ' + state.discount + '%'
+            : offer.control_group ? 'Khách thuộc nhóm đối chứng (10%) của chương trình đo hiệu quả ưu đãi: lần này không áp dụng ưu đãi.'
+            : 'Nhóm khách này chưa có ưu đãi đang bật.'));
         if (!offer.ai_available) box.append(node('p', 'offer-warning', 'Chưa kết nối được AI. Không tự gán ưu đãi dự phòng.'));
         if (offer.gift) box.append(node('p', 'offer-gift', 'Quà theo chương trình: ' + offer.gift));
         box.append(node('p', 'cashier-caption', 'Lời tư vấn dành cho khách'), node('blockquote', 'script-text', offer.script || 'Xin chào anh/chị. Em có thể hỗ trợ anh/chị tìm sản phẩm phù hợp không ạ?'));

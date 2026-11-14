@@ -143,6 +143,7 @@ public class PosApiController {
         res.put("gift", offer.giftDescription());
         res.put("script", offer.cashierScript());
         res.put("offer_available", offer.strategyId() != null);
+        res.put("control_group", offer.controlGroup());
         res.put("ai_available", offer.aiAvailable());
         res.put("gift_quantity_limit", offer.giftQuantityLimit());
         res.put("gift_options", offer.giftProducts().stream().map(product -> Map.of(
