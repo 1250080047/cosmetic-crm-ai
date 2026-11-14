@@ -560,14 +560,20 @@
         <div class="shift-report-head"><h3 id="shiftReportTitle">Báo cáo ca</h3><button type="button" class="modal-secondary" id="closeShiftReport">Đóng</button></div>
         <div id="shiftReportBody"></div>
         <div id="shiftCloseForm" class="shift-close-form" hidden>
-            <strong>Đếm tiền mặt trong két theo mệnh giá</strong>
-            <div class="cash-count-grid" id="cashCountGrid"></div>
-            <div class="cash-count-summary">
-                <div>Tiền mặt phải có<strong id="cashExpected">0 đ</strong></div>
-                <div>Đếm được<strong id="cashCounted">0 đ</strong></div>
-                <div>Chênh lệch<strong id="cashDiff">0 đ</strong></div>
+            <div class="cash-nothing-note" id="cashNothingNote" hidden>
+                <span>✔ Ca này không có tiền mặt (đầu ca 0 đ, không bán bằng tiền mặt, không có phiếu thu/chi) nên <strong>không cần đếm két</strong>.</span>
+                <button type="button" class="modal-secondary" id="cashCountAnyway">Trong két vẫn có tiền? Đếm tiền</button>
             </div>
-            <p class="cash-tolerance-note" id="cashToleranceNote">Lệch trong khoảng ±10.000 đ (tiền lẻ): kết ca bình thường. Lệch nhiều hơn: ghi lý do, ca chờ quản lý xác nhận.</p>
+            <div id="cashCountArea">
+                <strong>Đếm tiền mặt trong két theo mệnh giá</strong>
+                <div class="cash-count-grid" id="cashCountGrid"></div>
+                <div class="cash-count-summary">
+                    <div>Tiền mặt phải có<strong id="cashExpected">0 đ</strong></div>
+                    <div>Đếm được<strong id="cashCounted">0 đ</strong></div>
+                    <div>Chênh lệch<strong id="cashDiff">0 đ</strong></div>
+                </div>
+                <p class="cash-tolerance-note" id="cashToleranceNote">Lệch trong khoảng ±10.000 đ (tiền lẻ): kết ca bình thường. Lệch nhiều hơn: ghi lý do, ca chờ quản lý xác nhận.</p>
+            </div>
             <div class="form-group" id="cashReasonGroup" hidden><label for="cashReason">Lý do chênh lệch (bắt buộc, ít nhất 10 ký tự):</label><textarea id="cashReason" rows="2" maxlength="500" placeholder="VD: Thối nhầm cho khách 50.000 đ lúc 15h; khách chuyển khoản nhưng bấm nhầm tiền mặt…"></textarea></div>
             <div class="form-group"><label for="shiftNote">Ghi chú (tùy chọn):</label><input type="text" id="shiftNote" maxlength="500"></div>
             <button type="button" class="modal-primary danger" id="confirmCloseShift">Xác nhận kết ca</button>

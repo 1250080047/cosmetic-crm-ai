@@ -581,6 +581,10 @@
         });
         $('cashExpected').textContent = money(cash.expected);
         $('cashToleranceNote').textContent = 'Lệch trong khoảng ±' + money(cash.tolerance || 10000) + ' (tiền lẻ): kết ca bình thường. Lệch nhiều hơn: ghi lý do, ca chờ quản lý xác nhận.';
+        // No opening cash, no cash sale, no cash in/out: there is nothing to count (the drawer can still be counted if needed).
+        const nothing = [cash.opening, cash.cashSales, cash.cashIn, cash.cashOut, cash.expected].every((value) => !Number(value));
+        $('cashNothingNote').hidden = !nothing;
+        $('cashCountArea').hidden = nothing;
         updateCashCount();
     }
     function cashBreakdown() {
@@ -608,7 +612,10 @@
     }
     async function confirmCloseShift() {
         const { counted, difference, tolerance } = updateCashCount();
-        if (!Object.keys(cashBreakdown()).length && !confirm('Két không có tiền mặt nào (0 đ)? Bấm OK nếu đúng là két trống.')) return;
+        if (!$('cashNothingNote').hidden && $('cashCountArea').hidden) {   // a shift without any cash: one simple confirmation
+            if (!confirm('Kết thúc ca? Ca này không có tiền mặt nên không cần đếm két. Sau khi kết ca bạn cần mở ca mới để bán tiếp.')) return;
+            return submitCloseShift();
+        }
         if (Math.abs(difference) > tolerance && $('cashReason').value.trim().length < 10) {
             alert('Tiền mặt ' + (difference < 0 ? 'thiếu ' : 'dư ') + money(Math.abs(difference)) + ', quá ±' + money(tolerance) +
                 '. Hãy ghi lý do (ít nhất 10 ký tự); ca sẽ chờ quản lý xác nhận.');
@@ -616,6 +623,9 @@
         }
         if (!confirm('Kết thúc ca với ' + money(counted) + ' tiền mặt đếm được' + (difference ? ' (' + (difference > 0 ? 'dư ' : 'thiếu ') + money(Math.abs(difference)) + ')' : '') +
             '? Sau khi kết ca bạn cần mở ca mới để bán tiếp.')) return;
+        return submitCloseShift();
+    }
+    async function submitCloseShift() {
         const button = $('confirmCloseShift');
         button.disabled = true;
         try {
@@ -636,6 +646,10 @@
         state.category = button.dataset.category;
         document.querySelectorAll('.cat-btn').forEach((entry) => entry.classList.toggle('active', entry === button));
         renderProductGrid();
+    });
+    $('cashCountAnyway').addEventListener('click', () => {
+        $('cashNothingNote').hidden = true; $('cashCountArea').hidden = false;
+        document.querySelector('#cashCountGrid input')?.focus();
     });
     // Cash brought in / taken out of the drawer during the shift
     $('cashMovementButton').addEventListener('click', () => {

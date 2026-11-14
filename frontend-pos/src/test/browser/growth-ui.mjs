@@ -102,9 +102,10 @@ try {
                     denominations: [500000, 200000, 100000, 50000, 20000, 10000, 5000, 2000, 1000, 500] },
             movements: [{ kind: 'OUT', amount: 20000, reason: 'Chi mua nước uống', createdAt: now, createdBy: 'Thu ngân thử' }],
             review: {}, paymentChanges: [], gifts: [], giftTotals: { units: 0, retailValue: 0 }, products: [], orders: [] } };
+        window.__fakeShift = fake;
         const real = window.fetch;
         window.fetch = (url, options = {}) => String(url).endsWith('/api/pos/shift') && !options.method
-            ? Promise.resolve(new Response(JSON.stringify(fake), { headers: { 'Content-Type': 'application/json' } })) : real(url, options);
+            ? Promise.resolve(new Response(JSON.stringify(window.__fakeShift), { headers: { 'Content-Type': 'application/json' } })) : real(url, options);
         document.getElementById('closeShiftButton').click();
         return true; })()`);
     await wait('!document.getElementById("shiftCloseForm").hidden && document.querySelectorAll("#cashCountGrid input").length === 10');
@@ -118,6 +119,14 @@ try {
     await evaluate(`(() => { const input = document.querySelector('#cashCountGrid input[data-denomination="20000"]'); input.value = 2; input.dispatchEvent(new Event('input')); return true; })()`);
     report.posSmallDifferenceAsksReason = await evaluate('!document.getElementById("cashReasonGroup").hidden');   // 590.000 đ: 10.000 đ short, within the tolerance
     if (report.posSmallDifferenceAsksReason) throw new Error('A 10.000 đ difference is within the tolerance.');
+    // a shift without any cash (0 đ opening, no cash sale, no cash in/out): nothing to count
+    await evaluate(`(() => { const cash = window.__fakeShift.open.cash; Object.assign(cash, { opening: 0, cashSales: 0, cashIn: 0, cashOut: 0, expected: 0 });
+        window.__fakeShift.open.movements = []; window.__fakeShift.open.payments = [];
+        document.getElementById('closeShiftButton').click(); return true; })()`);
+    await wait('!document.getElementById("cashNothingNote").hidden && document.getElementById("cashCountArea").hidden');
+    report.posEmptyShiftSkipsCounting = true;
+    await evaluate('document.querySelector(".shift-close-form").scrollIntoView();true');
+    await delay(300); await shot('pos-close-empty-shift.png');
 
     // admin: a shift waiting for review shows the manager's two steps
     await send('Page.navigate', { url: base + '/admin' });

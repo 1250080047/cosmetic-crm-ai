@@ -123,7 +123,9 @@ public class ShiftService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn chỉ được kết thúc ca của mình.");
         if (!"OPEN".equals(rows.get(0).get("status"))) throw new ResponseStatusException(HttpStatus.CONFLICT, "Ca này đã kết thúc.");
         CashCount count = countCash(breakdown);
-        BigDecimal counted = count != null ? count.total() : countedCash == null ? null : validCash(countedCash, "Tiền mặt đếm được");
+        // a count sent with no notes at all means an empty drawer (0 đ); only "no count sent" is refused
+        BigDecimal counted = count != null ? count.total() : breakdown != null ? BigDecimal.ZERO.setScale(2)
+                : countedCash == null ? null : validCash(countedCash, "Tiền mặt đếm được");
         if (counted == null) throw new IllegalArgumentException("Hãy đếm tiền mặt trong két theo từng mệnh giá trước khi kết ca.");
         String cleanNote = text(note, 500, "Ghi chú");
         String why = text(reason, 500, "Lý do chênh lệch");

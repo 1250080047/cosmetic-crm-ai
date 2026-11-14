@@ -400,6 +400,14 @@ class GrowthIntegrationTest {
                 .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);   // nothing open any more
     }
 
+    @Test @Transactional void aShiftWithoutAnyCashClosesWithAnEmptyCount() {
+        int cashier = cashierWithoutOpenShift();
+        shiftService.open(cashier, java.math.BigDecimal.ZERO);
+        var closed = shiftService.close(null, cashier, false, null, Map.of(), null, null);   // nothing counted: an empty drawer
+        assertThat(((Map<?, ?>) closed.get("cash")).get("counted")).isEqualTo(new java.math.BigDecimal("0.00"));
+        assertThat(((Map<?, ?>) closed.get("review")).get("status")).isNull();
+    }
+
     @Test void managerSeesShiftsWithDifferencesAndPendingReviews() throws Exception {
         JsonNode shifts = get("/api/admin/shifts");
         assertThat(shifts.path("tolerance").asInt()).isEqualTo(10000);
