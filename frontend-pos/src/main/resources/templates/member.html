@@ -68,7 +68,7 @@
     <!-- Thẻ thành viên -->
     <section id="cardView" hidden>
         <article class="member-card">
-            <div class="card-top"><span>THẺ THÀNH VIÊN</span><span class="card-brand">COSMETIC</span></div>
+            <div class="card-top"><span>THẺ THÀNH VIÊN <b class="card-tier" id="cardTier"></b></span><span class="card-brand">COSMETIC</span></div>
             <strong class="card-name" id="cardName">—</strong>
             <div class="card-meta"><span id="cardCode">—</span><span id="cardPhone"></span></div>
             <div class="card-since" id="cardSince"></div>
@@ -82,8 +82,14 @@
         </section>
 
         <section class="panel points-panel">
-            <div><small>Điểm tích lũy</small><strong id="pointsValue">0</strong></div>
+            <div><small>Điểm tích lũy</small><strong id="pointsValue">0</strong><small class="points-worth" id="pointsWorth"></small></div>
             <p id="pointsRule">1 điểm cho mỗi 10.000 đ thanh toán</p>
+            <p class="redeem-rule" id="redeemRule"></p>
+            <div class="tier-box">
+                <div class="tier-line"><span id="tierNow">Hạng Thành viên</span><span id="tierNext"></span></div>
+                <div class="tier-progress" aria-hidden="true"><span id="tierBar"></span></div>
+                <small id="tierNote"></small>
+            </div>
         </section>
 
         <section class="panel offer-panel" id="offerPanel">

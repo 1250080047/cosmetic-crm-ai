@@ -38,7 +38,20 @@ public class Order {
     @Column(name = "applied_strategy_id")
     private Integer appliedStrategyId;
 
+    /** Điểm khách đã dùng trên hóa đơn này. */
+    @Column(name = "points_redeemed", nullable = false)
+    private Integer pointsRedeemed = 0;
+
+    /** Số tiền được giảm nhờ đổi điểm (đã tính trong discount_amount). */
+    @Column(name = "points_discount", nullable = false, precision = 16, scale = 2)
+    private BigDecimal pointsDiscount = BigDecimal.ZERO;
+
     public Order() {}
+
+    public Integer getPointsRedeemed() { return pointsRedeemed; }
+    public void setPointsRedeemed(Integer pointsRedeemed) { this.pointsRedeemed = pointsRedeemed; }
+    public BigDecimal getPointsDiscount() { return pointsDiscount; }
+    public void setPointsDiscount(BigDecimal pointsDiscount) { this.pointsDiscount = pointsDiscount; }
 
     public String getTransactionNo() { return transactionNo; }
     public void setTransactionNo(String transactionNo) { this.transactionNo = transactionNo; }

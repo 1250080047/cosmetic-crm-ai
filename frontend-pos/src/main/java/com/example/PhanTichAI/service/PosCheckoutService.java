@@ -106,13 +106,25 @@ public class PosCheckoutService {
             throw new IllegalArgumentException("Quà tặng cần đi cùng sản phẩm mua trong hóa đơn.");
         BigDecimal rate = offer == null ? BigDecimal.ZERO : offer.discountPercent();
         BigDecimal percentDiscount = subtotal.multiply(rate).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-        // The only discount is the approved offer of the customer's group; nobody can add money off at the counter.
-        BigDecimal discount = percentDiscount, finalAmount = subtotal.subtract(discount);
+        // Money off comes only from the approved offer of the customer's group and from the customer's own points
+        // (100 points = 10.000 đ, at most half of what is left after the offer); nobody can add money off at the counter.
+        BigDecimal payable = subtotal.subtract(percentDiscount);
+        int requestedPoints = request.getRedeemPoints() == null ? 0 : request.getRedeemPoints();
+        LoyaltyService.Redemption redemption = LoyaltyService.Redemption.NONE;
+        if (requestedPoints != 0) {
+            if (customer == null || loyalty == null) throw new IllegalArgumentException("Chỉ khách thành viên mới dùng được điểm.");
+            if (!loyalty.lockActiveCard(customer.getCustomerId()))
+                throw new IllegalArgumentException("Khách chưa kích hoạt thẻ thành viên nên chưa dùng được điểm.");
+            redemption = LoyaltyService.plan(requestedPoints, loyalty.balance(customer.getCustomerId()), payable);
+        }
+        BigDecimal discount = percentDiscount.add(redemption.value()), finalAmount = subtotal.subtract(discount);
         if ((request.getTotalAmount() != null && request.getTotalAmount().compareTo(subtotal) != 0) ||
                 (request.getFinalAmount() != null && request.getFinalAmount().compareTo(finalAmount) != 0))
             throw new IllegalArgumentException("Giá hoặc ưu đãi đã thay đổi. Vui lòng cập nhật hóa đơn trước khi thanh toán.");
 
         LocalDateTime now = LocalDateTime.now();
+        // The tier the customer had when buying (store spend of the 12 months before this invoice).
+        LoyaltyService.TierStatus tier = customer == null || loyalty == null ? null : loyalty.tier(customer.getCustomerId(), now);
         String transactionNo = "HD" + now.format(DateTimeFormatter.ofPattern("yyMMddHHmmssSSS")) +
                 UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
         Order order = new Order();
@@ -126,6 +138,8 @@ public class PosCheckoutService {
         order.setFinalAmount(finalAmount);
         order.setPaymentMethod(request.getPaymentMethod() == null ? "CASH" : request.getPaymentMethod());
         order.setAppliedStrategyId(offer == null ? null : offer.strategyId());
+        order.setPointsRedeemed(redemption.points());
+        order.setPointsDiscount(redemption.value());
         orders.save(order);
         locked.forEach((id, product) -> {
             product.setStockQuantity(product.getStockQuantity() - quantities.get(id));
@@ -154,11 +168,13 @@ public class PosCheckoutService {
             customer.setSegmentScoredAt(now);
             customers.save(customer);
         }
-        // Loyalty points: 1 point per 10.000 đ actually paid, written in the same transaction as the invoice.
+        // Loyalty points, in the same transaction as the invoice: the points used first, then 1 point per 10.000 đ
+        // actually paid × the tier multiplier.
         int pointsEarned = 0;
         Integer pointsBalance = null;
         if (customer != null && loyalty != null) {
-            pointsEarned = loyalty.award(customer.getCustomerId(), transactionNo, finalAmount, now);
+            loyalty.redeem(customer.getCustomerId(), transactionNo, redemption, now);
+            pointsEarned = loyalty.award(customer.getCustomerId(), transactionNo, finalAmount, now, tier.tier());
             pointsBalance = loyalty.balance(customer.getCustomerId());
         }
         Map<String, Object> result = new LinkedHashMap<>();
@@ -170,8 +186,12 @@ public class PosCheckoutService {
         result.put("segment_discount_amount", percentDiscount);
         result.put("discount_amount", discount);
         result.put("final_amount", finalAmount);
+        result.put("points_redeemed", redemption.points());
+        result.put("points_discount", redemption.value());
         result.put("points_earned", pointsEarned);
         result.put("points_balance", pointsBalance);
+        result.put("tier_label", tier == null ? null : tier.tier().label);
+        result.put("points_multiplier", tier == null ? null : tier.tier().multiplier);
         result.put("items", receiptLines);
         result.put("message", "Đã lưu hóa đơn và trừ kho, bao gồm quà tặng giá 0 đồng.");
         return result;

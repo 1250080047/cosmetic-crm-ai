@@ -49,10 +49,21 @@ h1 { font-size: 19px; margin: 6px 0 12px; }
 .qr-note { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
 .qr-note.error { color: var(--danger); }
 
-.points-panel { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.points-panel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
 .points-panel small { display: block; color: var(--muted); font-size: 12.5px; }
 .points-panel strong { font-size: 30px; color: var(--gold); line-height: 1.1; }
 .points-panel p { margin: 0; font-size: 12.5px; color: var(--muted); text-align: right; max-width: 55%; }
+.points-panel .points-worth { color: var(--gold); font-weight: 600; }
+.points-panel .redeem-rule { flex-basis: 100%; max-width: none; text-align: left; background: #fdf8ec; border-radius: 8px; padding: 8px 10px; color: #7a5413; }
+.tier-box { flex-basis: 100%; display: grid; gap: 5px; }
+.tier-line { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--ink); }
+.tier-line span:last-child { color: var(--muted); font-weight: 500; }
+.tier-progress { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.tier-progress span { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), #e0a93b); transform-origin: left; transform: scaleX(0); transition: transform .6s ease; }
+.card-tier { font-weight: 700; letter-spacing: 1.6px; }
+.member-card[data-tier="SILVER"] { background: linear-gradient(135deg, #4b5563 0%, #6b7280 55%, #9ca3af 100%); }
+.member-card[data-tier="GOLD"] { background: linear-gradient(135deg, #8a5a12 0%, #b7791f 55%, #d9a441 100%); }
+.history .minus { display: block; color: #b42318; font-size: 12.5px; font-weight: 700; }
 
 .offer-title { font-weight: 700; color: var(--green-dark); }
 .offer-line { margin: 4px 0 0; font-size: 14px; }

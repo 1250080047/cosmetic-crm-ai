@@ -86,8 +86,23 @@ public class PosApiController {
      * Find a member by phone number, by customer code (KH00012) or by the QR code of the member card
      * (changes every 60 seconds); returns the approved offer of their group, points and card status.
      */
+    /**
+     * A member card scanned at this counter (the rotating QR code on the customer's own phone proves the customer is
+     * here): their points may be used on an invoice for 15 minutes. Typing a phone number is not enough to spend points.
+     */
+    static final String VERIFIED_MEMBER = "POS_VERIFIED_MEMBER";
+    static final java.time.Duration VERIFIED_FOR = java.time.Duration.ofMinutes(15);
+    record VerifiedMember(int customerId, java.time.Instant at) implements java.io.Serializable {}
+
+    static boolean verified(jakarta.servlet.http.HttpSession session, Integer customerId) {
+        Object value = session == null ? null : session.getAttribute(VERIFIED_MEMBER);
+        return value instanceof VerifiedMember member && customerId != null && member.customerId() == customerId
+                && member.at().plus(VERIFIED_FOR).isAfter(java.time.Instant.now());
+    }
+
     @GetMapping("/customer-lookup")
-    public ResponseEntity<?> lookupCustomer(@RequestParam(required = false) String phone, @RequestParam(required = false) String q) {
+    public ResponseEntity<?> lookupCustomer(@RequestParam(required = false) String phone, @RequestParam(required = false) String q,
+                                            jakarta.servlet.http.HttpSession session) {
         String key = (q != null && !q.isBlank() ? q : phone == null ? "" : phone).trim();
         if (key.isEmpty() || key.length() > 64)
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Nhập số điện thoại hoặc mã khách hàng."));
@@ -133,9 +148,19 @@ public class PosApiController {
         res.put("total_orders", customer.getTotalOrders());
         res.put("total_spent", customer.getTotalSpent());
         res.put("last_purchase", customer.getLastPurchase());
-        res.put("points", loyalty.balance(customer.getCustomerId()));
-        res.put("member_status", members.status(customer.getCustomerId()));
+        int balance = loyalty.balance(customer.getCustomerId());
+        String memberStatus = members.status(customer.getCustomerId());
+        res.putAll(loyalty.tier(customer.getCustomerId(), java.time.LocalDateTime.now()).describe());
+        res.put("points", balance);
+        res.put("points_value", LoyaltyService.REDEEM_STEP_VALUE.multiply(BigDecimal.valueOf(balance / LoyaltyService.REDEEM_STEP)));
+        res.put("member_status", memberStatus);
         res.put("scanned", scanned);
+        boolean present = scanned && "ACTIVE".equals(memberStatus);
+        if (present) session.setAttribute(VERIFIED_MEMBER, new VerifiedMember(customer.getCustomerId(), java.time.Instant.now()));
+        res.put("can_redeem", (present || verified(session, customer.getCustomerId())) && balance >= LoyaltyService.REDEEM_STEP);
+        res.put("redeem_step", LoyaltyService.REDEEM_STEP);
+        res.put("redeem_step_value", LoyaltyService.REDEEM_STEP_VALUE);
+        res.put("redeem_max_share", LoyaltyService.REDEEM_MAX_SHARE);
         return ResponseEntity.ok(res);
     }
 
@@ -186,9 +211,16 @@ public class PosApiController {
     }
 
     @PostMapping("/checkout")
-    public ResponseEntity<?> checkout(@RequestBody CheckoutRequest req, @AuthenticationPrincipal StoreUser user) {
+    public ResponseEntity<?> checkout(@RequestBody CheckoutRequest req, @AuthenticationPrincipal StoreUser user,
+                                      jakarta.servlet.http.HttpSession session) {
+        boolean usesPoints = req.getRedeemPoints() != null && req.getRedeemPoints() != 0;
+        if (usesPoints && !verified(session, req.getCustomerId()))
+            return ResponseEntity.status(403).body(Map.of("success", false, "message",
+                    "Muốn dùng điểm, hãy bấm 📷 quét mã QR trên điện thoại của khách (có hiệu lực 15 phút) rồi thanh toán lại."));
         try {
-            return ResponseEntity.ok(posCheckoutService.checkout(req, user.getId()));
+            Map<String, Object> result = posCheckoutService.checkout(req, user.getId());
+            if (usesPoints) session.removeAttribute(VERIFIED_MEMBER);   // one scan, one invoice with points
+            return ResponseEntity.ok(result);
         } catch (IllegalArgumentException error) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", error.getMessage()));
         } catch (Exception error) {

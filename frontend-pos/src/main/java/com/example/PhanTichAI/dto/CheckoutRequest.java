@@ -10,6 +10,11 @@ public class CheckoutRequest {
     private BigDecimal finalAmount;
     private String paymentMethod;
     private List<ItemDto> items;
+    /** Points the customer uses on this invoice (multiples of 100; 100 points = 10.000 đ). */
+    private Integer redeemPoints;
+
+    public Integer getRedeemPoints() { return redeemPoints; }
+    public void setRedeemPoints(Integer redeemPoints) { this.redeemPoints = redeemPoints; }
 
     public static class ItemDto {
         private Integer productId;

@@ -26,7 +26,9 @@ CREATE TABLE loyalty_points (
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'ix_points_customer')
     CREATE INDEX ix_points_customer ON loyalty_points(customer_id) INCLUDE (points, created_at);
+-- (003 thay chỉ mục này bằng ux_points_invoice_kind để một hóa đơn có thể vừa tích vừa đổi điểm)
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'ux_points_invoice')
+   AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'ux_points_invoice_kind')
     CREATE UNIQUE INDEX ux_points_invoice ON loyalty_points(transaction_no) WHERE transaction_no IS NOT NULL;
 GO
 

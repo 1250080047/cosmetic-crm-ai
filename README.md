@@ -201,9 +201,24 @@ tối đa 200 truy cập cùng lúc, chỉ dùng để thử nghiệm/demo; lapt
 
 - **Mã QR đổi mỗi 60 giây** (`CM1.<mã khách>.<phút>.<chữ ký HMAC-SHA256>`, khóa bí mật trong `.runtime/member-qr.key`):
   ảnh chụp mã cũ hết dùng được sau tối đa 2 phút, không ai tự tạo được mã của khách khác. Thu ngân vẫn tra được bằng SĐT/mã khách.
-- **Tích điểm:** 1 điểm cho mỗi 10.000 đ khách thực trả (sau ưu đãi), làm tròn xuống, ghi trong cùng giao dịch với hóa đơn
-  (bảng `loyalty_points`). Hóa đơn in ghi số điểm cộng và tổng điểm. Hóa đơn lịch sử OnlineSales không tính điểm. Chưa có đổi điểm.
-- Trang khách hiện: thẻ, mã QR, điểm, **ưu đãi đang có** (không hiện tên nhóm nội bộ như "ngủ đông"), 10 hóa đơn và 10 lần cộng điểm gần nhất.
+- **Tích điểm:** 1 điểm cho mỗi 10.000 đ khách thực trả (sau ưu đãi và sau khi trừ điểm), làm tròn xuống, × hệ số hạng thẻ;
+  ghi trong cùng giao dịch với hóa đơn (bảng `loyalty_points`, loại `EARN`). Hóa đơn lịch sử OnlineSales không tính điểm.
+- **Hạng thẻ** (luật rõ ràng khách nhìn thấy — khác nhóm LRFM nội bộ của AI), theo chi tiêu **tại cửa hàng** 12 tháng gần nhất:
+
+  | Hạng | Chi tiêu 12 tháng | Điểm |
+  |---|---|---|
+  | Thành viên | dưới 2.000.000 đ | ×1 |
+  | Bạc | từ 2.000.000 đ | ×1,5 |
+  | Vàng | từ 5.000.000 đ | ×2 |
+
+  Không dùng dữ liệu nền để xếp hạng vì đó là số liệu mua sỉ (hóa đơn trung vị 13,1 triệu đ — dùng thì ai cũng hạng Vàng).
+- **Đổi điểm tại quầy:** **100 điểm = giảm 10.000 đ** (hoàn 1%), theo từng 100 điểm, tối đa **50% hóa đơn sau ưu đãi**.
+  Chỉ dùng được sau khi thu ngân **bấm 📷 quét mã QR trên điện thoại của khách** (chứng minh khách có mặt, hiệu lực 15 phút, một lần
+  quét cho một hóa đơn) — gõ số điện thoại không đủ để tiêu điểm của người khác. Máy chủ khóa thẻ của khách trong giao dịch
+  (`UPDLOCK`) để không tiêu trùng điểm. Hóa đơn ghi `orders.points_redeemed`, `points_discount` (đã nằm trong `discount_amount`);
+  sổ điểm ghi một dòng âm loại `REDEEM`.
+- Trang khách hiện: thẻ (màu theo hạng), mã QR, điểm và số tiền quy đổi, thanh tiến độ lên hạng, **ưu đãi đang có** (không hiện tên
+  nhóm nội bộ như "ngủ đông"), 10 hóa đơn và 10 lần cộng/đổi điểm gần nhất.
   Có thể "Thêm vào màn hình chính" để mở như ứng dụng.
 - Phiên của khách tách hẳn với tài khoản nhân viên: khách không vào được POS hay trang quản trị (test `MemberSecurityTest`).
 

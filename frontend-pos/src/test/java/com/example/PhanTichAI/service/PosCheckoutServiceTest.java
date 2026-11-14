@@ -228,6 +228,85 @@ class PosCheckoutServiceTest {
         assertThat(LoyaltyService.pointsFor(null)).isZero();
     }
 
+    // ---- tiers and redeeming points ---------------------------------------------------------------
+    @Test
+    void tiersFollowTwelveMonthStoreSpend() {
+        assertThat(LoyaltyService.Tier.of(new BigDecimal("1999999"))).isEqualTo(LoyaltyService.Tier.MEMBER);
+        assertThat(LoyaltyService.Tier.of(new BigDecimal("2000000"))).isEqualTo(LoyaltyService.Tier.SILVER);
+        assertThat(LoyaltyService.Tier.of(new BigDecimal("5000000"))).isEqualTo(LoyaltyService.Tier.GOLD);
+        assertThat(LoyaltyService.pointsFor(new BigDecimal("100000"), LoyaltyService.Tier.SILVER)).isEqualTo(15);
+        assertThat(LoyaltyService.pointsFor(new BigDecimal("100000"), LoyaltyService.Tier.GOLD)).isEqualTo(20);
+        var status = LoyaltyService.TierStatus.of(new BigDecimal("3800000"));
+        assertThat(status.tier()).isEqualTo(LoyaltyService.Tier.SILVER);
+        assertThat(status.toNext()).isEqualByComparingTo("1200000");
+    }
+
+    @Test
+    void pointsAreUsedInStepsOfOneHundredUpToHalfTheInvoice() {
+        assertThat(LoyaltyService.maxRedeemable(49, new BigDecimal("92000"))).isZero();
+        assertThat(LoyaltyService.maxRedeemable(250, new BigDecimal("92000"))).isEqualTo(200);   // balance limits
+        assertThat(LoyaltyService.maxRedeemable(1000, new BigDecimal("92000"))).isEqualTo(400);  // 50% of 92.000 đ limits
+        assertThat(LoyaltyService.plan(200, 250, new BigDecimal("92000")).value()).isEqualByComparingTo("20000");
+        assertThatThrownBy(() -> LoyaltyService.plan(150, 250, new BigDecimal("92000"))).hasMessageContaining("từng 100 điểm");
+        assertThatThrownBy(() -> LoyaltyService.plan(300, 250, new BigDecimal("92000"))).hasMessageContaining("chỉ còn");
+        assertThatThrownBy(() -> LoyaltyService.plan(500, 1000, new BigDecimal("92000"))).hasMessageContaining("50%");
+        assertThatThrownBy(() -> LoyaltyService.plan(-100, 1000, new BigDecimal("92000"))).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private LoyaltyService loyaltyWith(LoyaltyPointRepository points, boolean activeCard, String spend12m) {
+        return new LoyaltyService(points) {
+            @Override public boolean lockActiveCard(int customerId) { return activeCard; }
+            @Override public TierStatus tier(int customerId, java.time.LocalDateTime at) { return TierStatus.of(new BigDecimal(spend12m)); }
+        };
+    }
+
+    @Test
+    void silverMemberUsesPointsAndEarnsOnWhatIsLeftToPay() {
+        var points = mock(LoyaltyPointRepository.class);
+        when(points.balanceOf(100)).thenReturn(250L);
+        checkout = new PosCheckoutService(products, customers, orders, orderItems, offers, shifts, loyaltyWith(points, true, "2500000"));
+        var request = request(item(1, false, "100000"));
+        configuredCustomer(request, List.of(), 1);
+        request.setRedeemPoints(200);
+        request.setTotalAmount(new BigDecimal("100000"));
+        request.setFinalAmount(new BigDecimal("72000"));       // 100.000 − 8% offer − 200 points (20.000 đ)
+        when(products.findByIdForUpdate(83)).thenReturn(Optional.of(cleanser));
+        var result = checkout.checkout(request);
+        assertThat((BigDecimal) result.get("final_amount")).isEqualByComparingTo("72000");
+        assertThat((BigDecimal) result.get("discount_amount")).isEqualByComparingTo("28000");
+        assertThat(result.get("points_redeemed")).isEqualTo(200);
+        var saved = ArgumentCaptor.forClass(LoyaltyPoint.class);
+        verify(points, times(2)).save(saved.capture());
+        assertThat(saved.getAllValues()).extracting(LoyaltyPoint::getKind, LoyaltyPoint::getPoints)
+                .containsExactly(tuple("REDEEM", -200), tuple("EARN", 10));     // 72.000 đ × 1,5 (Bạc) = 10 points
+        var order = ArgumentCaptor.forClass(Order.class);
+        verify(orders).save(order.capture());
+        assertThat(order.getValue().getPointsRedeemed()).isEqualTo(200);
+        assertThat(order.getValue().getPointsDiscount()).isEqualByComparingTo("20000");
+    }
+
+    @Test
+    void pointsNeedAnActivatedCard() {
+        var points = mock(LoyaltyPointRepository.class);
+        when(points.balanceOf(100)).thenReturn(250L);
+        checkout = new PosCheckoutService(products, customers, orders, orderItems, offers, shifts, loyaltyWith(points, false, "0"));
+        var request = request(item(1, false, "100000"));
+        configuredCustomer(request, List.of(), 1);
+        request.setRedeemPoints(100);
+        when(products.findByIdForUpdate(83)).thenReturn(Optional.of(cleanser));
+        assertThatThrownBy(() -> checkout.checkout(request)).hasMessageContaining("chưa kích hoạt");
+        verifyNoInteractions(orders, orderItems);
+        verify(points, never()).save(any());
+    }
+
+    @Test
+    void walkInCustomerCannotUsePoints() {
+        var request = request(item(1, false, "100000"));
+        request.setRedeemPoints(100);
+        when(products.findByIdForUpdate(83)).thenReturn(Optional.of(cleanser));
+        assertThatThrownBy(() -> checkout.checkout(request)).hasMessageContaining("thành viên");
+    }
+
     @Test
     void aBrowserAskingForExtraMoneyOffIsRejected() {
         var request = request(item(1, false, "100000"));

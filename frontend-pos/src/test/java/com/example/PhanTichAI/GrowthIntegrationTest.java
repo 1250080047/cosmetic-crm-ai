@@ -96,6 +96,42 @@ class GrowthIntegrationTest {
         assertThat(data.path("usage").has("invoices_with_suggestion")).isTrue();
     }
 
+    // ---- 2. points and tiers ----------------------------------------------------------------------
+    @Test @Transactional void memberUsesPointsAndEarnsOnARealInvoice() {
+        Integer customer = jdbc.queryForObject("""
+                SELECT TOP 1 customer_id FROM customers WHERE customer_id NOT IN (SELECT customer_id FROM member_accounts)
+                ORDER BY customer_id""", Integer.class);
+        jdbc.update("INSERT INTO member_accounts(customer_id, pin_hash) VALUES (?, 'test-only')", customer);       // rolled back
+        jdbc.update("INSERT INTO loyalty_points(customer_id, transaction_no, points, note, created_at, kind) VALUES (?, NULL, 300, N'Thử', SYSDATETIME(), 'ADJUST')", customer);
+        Integer product = jdbc.queryForObject("SELECT TOP 1 id FROM products WHERE is_active = 1 AND stock_quantity > 5 AND unit_price >= 50000 ORDER BY id", Integer.class);
+        CheckoutRequest request = new CheckoutRequest();
+        CheckoutRequest.ItemDto item = new CheckoutRequest.ItemDto();
+        item.setProductId(product); item.setQuantity(2);
+        request.setItems(List.of(item));
+        request.setCustomerId(customer);
+        request.setRedeemPoints(100);
+        request.setPaymentMethod("CASH");
+        Map<String, Object> result = checkout.checkout(request);
+        String invoice = (String) result.get("transaction_no");
+        assertThat(result.get("points_redeemed")).isEqualTo(100);
+        var ledger = jdbc.queryForList("SELECT kind, points FROM loyalty_points WHERE transaction_no = ? ORDER BY kind", invoice);
+        assertThat(ledger).anySatisfy(row -> { assertThat(row.get("kind")).isEqualTo("REDEEM"); assertThat(row.get("points")).isEqualTo(-100); });
+        assertThat(ledger).anySatisfy(row -> assertThat(row.get("kind")).isEqualTo("EARN"));
+        assertThat(jdbc.queryForObject("SELECT points_redeemed FROM orders WHERE transaction_no = ?", Integer.class, invoice)).isEqualTo(100);
+        assertThat(jdbc.queryForObject("SELECT points_discount FROM orders WHERE transaction_no = ?", java.math.BigDecimal.class, invoice))
+                .isEqualByComparingTo("10000");
+        int balance = jdbc.queryForObject("SELECT SUM(points) FROM loyalty_points WHERE customer_id = ?", Integer.class, customer);
+        assertThat(balance).isEqualTo(300 - 100 + (Integer) result.get("points_earned"));
+    }
+
+    @Test void lookupShowsTierAndHidesPointsUseWithoutAScan() throws Exception {
+        String phone = jdbc.queryForObject("SELECT TOP 1 phone FROM customers WHERE phone IS NOT NULL ORDER BY customer_id", String.class);
+        JsonNode customer = get("/api/pos/customer-lookup?q=" + URLEncoder.encode(phone, StandardCharsets.UTF_8));
+        assertThat(customer.path("found").asBoolean()).isTrue();
+        assertThat(customer.path("tier_label").asText()).isIn("Thành viên", "Bạc", "Vàng");
+        assertThat(customer.path("can_redeem").asBoolean()).as("typed phone number, not a scan").isFalse();
+    }
+
     @Test @Transactional void productAddedFromASuggestionIsMarkedOnTheInvoice() {
         Integer product = jdbc.queryForObject("SELECT TOP 1 id FROM products WHERE is_active = 1 AND stock_quantity > 5 ORDER BY id", Integer.class);
         CheckoutRequest request = new CheckoutRequest();

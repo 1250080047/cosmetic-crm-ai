@@ -3,7 +3,7 @@
 (() => {
     const $ = (id) => document.getElementById(id);
     const state = {
-        products: [], categories: [], category: 'ALL', cart: [], customer: null, discount: 0,
+        products: [], categories: [], category: 'ALL', cart: [], customer: null, discount: 0, redeem: 0,
         busy: false, lookingUp: false, shift: null, shiftKnown: false, report: null
     };
     const format = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 });
@@ -67,10 +67,47 @@
         show(local ? product.imageUrl : fallback);
     }
 
+    // Points: 100 points = 10.000 đ, in steps of 100, at most half of the invoice after the offer, only after the cashier
+    // scanned the QR code on the customer's phone (can_redeem). The server checks the same rule again.
+    const redeemRule = () => ({ step: Number(state.customer?.redeem_step) || 100, value: Number(state.customer?.redeem_step_value) || 10000,
+        share: Number(state.customer?.redeem_max_share) || 0.5 });
+    function maxRedeemable(payable) {
+        if (!state.customer?.can_redeem) return 0;
+        const rule = redeemRule();
+        const byBalance = Math.floor((Number(state.customer.points) || 0) / rule.step);
+        const byInvoice = Math.floor(Math.round(payable * 100) * rule.share / (rule.value * 100) + 1e-9);
+        return Math.max(0, Math.min(byBalance, byInvoice)) * rule.step;
+    }
     function totals() {
         const subtotal = round(state.cart.reduce((sum, item) => sum + item.price * item.qty, 0));
         const percentDiscount = round(subtotal * state.discount / 100);
-        return { subtotal, percentDiscount, finalAmount: round(Math.max(0, subtotal - percentDiscount)) };
+        const payable = round(subtotal - percentDiscount);
+        const maxPoints = maxRedeemable(payable);
+        const redeemPoints = Math.min(state.redeem, maxPoints);
+        const pointsValue = redeemPoints / redeemRule().step * redeemRule().value;
+        return { subtotal, percentDiscount, maxPoints, redeemPoints, pointsValue, finalAmount: round(Math.max(0, payable - pointsValue)) };
+    }
+    function renderPoints(amounts) {
+        const customer = state.customer;
+        $('pointsRow').hidden = !customer?.can_redeem;
+        const hint = $('pointsHint');
+        const points = Number(customer?.points) || 0;
+        hint.hidden = !customer || customer.can_redeem || points < redeemRule().step;
+        if (!hint.hidden) hint.textContent = customer.member_status === 'ACTIVE'
+            ? 'Khách có ' + points.toLocaleString('vi-VN') + ' điểm (≈ ' + money(Number(customer.points_value) || 0) + '). Muốn dùng điểm: bấm 📷 quét mã QR trên điện thoại của khách.'
+            : 'Khách có ' + points.toLocaleString('vi-VN') + ' điểm. Cần kích hoạt thẻ thành viên rồi quét mã QR để dùng điểm.';
+        if (!customer?.can_redeem) return;
+        const select = $('redeemSelect');
+        const wanted = String(amounts.redeemPoints);
+        const options = [];
+        for (let p = 0; p <= amounts.maxPoints; p += redeemRule().step) options.push(p);
+        if (select.options.length !== options.length) {
+            select.replaceChildren(...options.map((p) => new Option(p ? p.toLocaleString('vi-VN') + ' điểm' : 'Không dùng', String(p))));
+        }
+        select.value = wanted;
+        select.disabled = state.busy || options.length <= 1;
+        select.title = options.length <= 1 ? 'Hóa đơn cần lớn hơn để dùng điểm (tối đa 50% hóa đơn sau ưu đãi).' : '';
+        $('pointsDiscount').textContent = '−' + money(amounts.pointsValue);
     }
 
     // ---- Catalog -------------------------------------------------------------------------------
@@ -248,6 +285,7 @@
         $('discountAmount').textContent = '−' + money(amounts.percentDiscount);
         $('finalTotal').textContent = money(amounts.finalAmount);
         $('discountRateText').textContent = state.discount + '%';
+        renderPoints(amounts);
         const button = document.querySelector('.btn-checkout');
         const noShift = state.shiftKnown && !state.shift;
         button.disabled = state.busy || state.lookingUp || !state.cart.length || noShift;
@@ -323,6 +361,14 @@
     }
     function applyCustomerToPos(customer) {
         state.customer = customer;
+        state.redeem = 0;
+        const tier = $('custTier');
+        tier.hidden = !customer.tier_label;
+        tier.textContent = 'Hạng ' + (customer.tier_label || '');
+        tier.dataset.tier = customer.tier || 'MEMBER';
+        tier.title = customer.tier_label ? 'Chi tiêu tại cửa hàng 12 tháng: ' + money(customer.store_spend_12m) +
+            (customer.next_tier_label ? ' · còn ' + money(customer.to_next_tier) + ' nữa lên hạng ' + customer.next_tier_label : '') +
+            ' · điểm ×' + String(customer.points_multiplier).replace('.', ',') : '';
         state.discount = customer.offer_available && Number.isFinite(Number(customer.discount_percent)) ? Number(customer.discount_percent) : 0;
         state.cart = state.cart.filter((item) => !item.gift);
         $('customerInfo').style.display = 'block';
@@ -342,7 +388,7 @@
         renderCart(); renderOffer(); renderProductGrid();
     }
     function resetCustomer(clearPhone = true) {
-        state.customer = null; state.discount = 0;
+        state.customer = null; state.discount = 0; state.redeem = 0;
         state.cart = state.cart.filter((item) => !item.gift);
         $('customerInfo').style.display = 'none';
         if (clearPhone) $('phoneInput').value = '';
@@ -417,8 +463,8 @@
         if (giftUnits() && amounts.subtotal <= 0) { alert('Quà tặng cần đi cùng sản phẩm mua trong hóa đơn.'); return; }
         const payload = {
             customerId: state.customer?.customer_id ?? null,
-            totalAmount: amounts.subtotal, discountAmount: amounts.percentDiscount,
-            finalAmount: amounts.finalAmount, paymentMethod: $('paymentMethod').value,
+            totalAmount: amounts.subtotal, discountAmount: round(amounts.percentDiscount + amounts.pointsValue),
+            finalAmount: amounts.finalAmount, paymentMethod: $('paymentMethod').value, redeemPoints: amounts.redeemPoints,
             items: state.cart.map((item) => ({ productId: item.id, quantity: item.qty, unitPrice: item.price, gift: item.gift,
                 fromSuggestion: Boolean(item.suggested) }))
         };
@@ -449,8 +495,12 @@
         $('rcpDiscount').textContent = '−' + money(result.segment_discount_amount);
         $('rcpFinal').textContent = money(result.final_amount);
         const hasPoints = result.points_balance !== null && result.points_balance !== undefined;
+        const used = Number(result.points_redeemed) || 0;
+        $('rcpRedeemRow').style.display = used ? 'flex' : 'none';
+        $('rcpRedeem').textContent = used ? used.toLocaleString('vi-VN') + ' điểm · −' + money(result.points_discount) : '';
         $('rcpPointsRow').style.display = hasPoints ? 'flex' : 'none';
-        $('rcpPoints').textContent = hasPoints ? '+' + Number(result.points_earned || 0).toLocaleString('vi-VN') + ' (tổng ' + Number(result.points_balance).toLocaleString('vi-VN') + ' điểm)' : '';
+        const boost = Number(result.points_multiplier) > 1 ? ' · hạng ' + result.tier_label + ' ×' + String(result.points_multiplier).replace('.', ',') : '';
+        $('rcpPoints').textContent = hasPoints ? '+' + Number(result.points_earned || 0).toLocaleString('vi-VN') + boost + ' (còn ' + Number(result.points_balance).toLocaleString('vi-VN') + ' điểm)' : '';
         $('receiptModal').style.display = 'flex';
     }
     function closeReceipt() {
@@ -529,6 +579,7 @@
         document.querySelectorAll('.cat-btn').forEach((entry) => entry.classList.toggle('active', entry === button));
         renderProductGrid();
     });
+    $('redeemSelect').addEventListener('change', (event) => { state.redeem = Number(event.target.value) || 0; renderCart(); });
     $('memberLinkButton').addEventListener('click', () => openMemberModal());
     $('activationButton').addEventListener('click', issueActivationCode);
     $('memberClose').addEventListener('click', closeMemberModal);

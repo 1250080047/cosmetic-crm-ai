@@ -72,10 +72,27 @@
         $('cardPhone').textContent = card.phone || '';
         $('cardSince').textContent = card.member_since ? 'Thành viên từ ' + day(card.member_since) : '';
         $('pointsValue').textContent = number.format(card.points || 0);
+        $('pointsWorth').textContent = Number(card.points_value) > 0 ? '≈ ' + money.format(Number(card.points_value)) + ' khi đổi' : '';
         $('pointsRule').textContent = card.points_rule || '';
+        $('redeemRule').textContent = card.redeem_rule || '';
+        renderTier(card);
         renderOffer(card.offer, card.total_orders);
         renderHistory(card);
         loadQr();
+    }
+    // Tier from the store spend of the last 12 months: Thành viên → Bạc (2.000.000 đ, points ×1,5) → Vàng (5.000.000 đ, ×2).
+    function renderTier(card) {
+        const label = card.tier_label || 'Thành viên';
+        $('cardTier').textContent = label === 'Thành viên' ? '' : '· ' + label.toUpperCase();
+        document.querySelector('.member-card').dataset.tier = card.tier || 'MEMBER';
+        $('tierNow').textContent = 'Hạng ' + label;
+        const spend = Number(card.store_spend_12m) || 0, next = Number(card.next_tier_spend) || 0;
+        $('tierNext').textContent = card.next_tier_label ? 'Hạng ' + card.next_tier_label : 'Hạng cao nhất';
+        $('tierBar').style.transform = 'scaleX(' + (next ? Math.min(1, spend / next) : 1) + ')';
+        $('tierNote').textContent = card.next_tier_label
+            ? 'Đã chi ' + money.format(spend) + ' tại cửa hàng trong 12 tháng · còn ' + money.format(Number(card.to_next_tier) || 0) +
+              ' nữa lên hạng ' + card.next_tier_label + (card.next_tier === 'GOLD' ? ' (điểm ×2)' : ' (điểm ×1,5)')
+            : 'Bạn đang ở hạng cao nhất: điểm ×2 cho mỗi hóa đơn.';
     }
     function renderOffer(offer, totalOrders) {
         const body = $('offerBody');
@@ -98,6 +115,7 @@
             const li = el('li'), left = el('div'), right = el('div', null, 'amount');
             left.append(el('span', moment(order.orderDate)), el('small', number.format(order.items || 0) + ' sản phẩm' + (order.paymentMethod === 'ONLINE' ? ' · mua online' : '')));
             right.append(el('span', money.format(Number(order.paid || 0))));
+            if (Number(order.pointsUsed) > 0) right.append(el('small', '−' + number.format(order.pointsUsed) + ' điểm đã dùng', 'minus'));
             if (Number(order.points) > 0) right.append(el('small', '+' + number.format(order.points) + ' điểm', 'plus'));
             li.append(left, right); orders.append(li);
         });
@@ -105,7 +123,7 @@
         (card.points_history || []).forEach((row) => {
             const li = el('li'), left = el('div');
             left.append(el('span', row.note), el('small', moment(row.at)));
-            li.append(left, el('div', (row.points > 0 ? '+' : '') + number.format(row.points), 'amount plus'));
+            li.append(left, el('div', (row.points > 0 ? '+' : '') + number.format(row.points), 'amount ' + (row.points < 0 ? 'minus' : 'plus')));
             points.append(li);
         });
     }

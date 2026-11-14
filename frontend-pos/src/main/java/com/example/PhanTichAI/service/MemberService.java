@@ -16,6 +16,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -179,16 +180,23 @@ public class MemberService {
         card.put("customer_code", customer.getCustomerCode());
         card.put("phone", maskPhone(customer.getPhone()));
         card.put("member_since", account == null ? null : account.getCreatedAt());
-        card.put("points", loyalty.balance(customerId));
-        card.put("points_rule", "1 điểm cho mỗi 10.000 đ thanh toán");
+        int balance = loyalty.balance(customerId);
+        LoyaltyService.TierStatus tier = loyalty.tier(customerId, now());
+        if (tier != null) card.putAll(tier.describe());
+        boolean boosted = tier != null && tier.tier() != LoyaltyService.Tier.MEMBER;
+        card.put("points", balance);
+        card.put("points_value", LoyaltyService.REDEEM_STEP_VALUE.multiply(BigDecimal.valueOf(balance / LoyaltyService.REDEEM_STEP)));
+        card.put("points_rule", "1 điểm cho mỗi 10.000 đ thanh toán" + (boosted
+                ? " · hạng " + tier.tier().label + " được ×" + tier.tier().multiplier.stripTrailingZeros().toPlainString().replace('.', ',') : ""));
+        card.put("redeem_rule", "100 điểm = giảm 10.000 đ khi thanh toán tại quầy (tối đa 50% hóa đơn). Nhờ thu ngân quét mã QR của bạn.");
         card.put("total_orders", customer.getTotalOrders());
         card.put("offer", offer(customerId));
         card.put("orders", jdbc.queryForList("""
                 SELECT TOP (10) o.transaction_no AS transactionNo, o.order_date AS orderDate, o.final_amount AS paid,
-                       o.discount_amount AS discount, o.payment_method AS paymentMethod,
+                       o.discount_amount AS discount, o.payment_method AS paymentMethod, o.points_redeemed AS pointsUsed,
                        (SELECT COALESCE(SUM(i.quantity),0) FROM order_items i WHERE i.transaction_no=o.transaction_no) AS items,
                        COALESCE(p.points,0) AS points
-                FROM orders o LEFT JOIN loyalty_points p ON p.transaction_no=o.transaction_no
+                FROM orders o LEFT JOIN loyalty_points p ON p.transaction_no=o.transaction_no AND p.kind='EARN'
                 WHERE o.customer_id=? ORDER BY o.order_date DESC, o.transaction_no DESC
                 """, customerId));
         List<Map<String, Object>> history = new ArrayList<>();
