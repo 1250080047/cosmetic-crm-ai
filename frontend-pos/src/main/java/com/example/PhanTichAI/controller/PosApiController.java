@@ -61,9 +61,18 @@ public class PosApiController {
         this.memberLinks = memberLinks;
     }
 
+    /** Products on sale; stockQuantity is what can be sold: units in lots that have not expired. */
     @GetMapping("/products")
     public List<Map<String, Object>> getAllProducts() {
-        return productRepository.findByIsActiveTrueOrderByIdAsc().stream().map(this::publicProduct).toList();
+        Map<Integer, Integer> sellable = new HashMap<>();
+        List<Map<String, Object>> rows = jdbc.queryForList(com.example.PhanTichAI.service.InventoryService.SELLABLE_SQL);
+        if (rows != null) rows.forEach(row -> sellable.put(((Number) row.get("product_id")).intValue(), ((Number) row.get("sellable")).intValue()));
+        boolean lotsKnown = !sellable.isEmpty();
+        return productRepository.findByIsActiveTrueOrderByIdAsc().stream().map(product -> {
+            Map<String, Object> view = publicProduct(product);
+            if (lotsKnown) view.put("stockQuantity", sellable.getOrDefault(product.getId(), 0));
+            return view;
+        }).toList();
     }
 
     @GetMapping("/categories")

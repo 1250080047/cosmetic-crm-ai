@@ -102,7 +102,7 @@ Lưu ý khi đọc: dữ liệu nền kết thúc năm 2021, nên **hôm nay** m
 
 | Thư mục | Nội dung |
 |---|---|
-| `entity/` | 17 lớp ánh xạ 17 bảng SQL (JPA): Customer, Order, OrderItem, Product, Strategy, Category, Role, User, Shift, CustomerSegment, ModelVersion, DriftCheck, StrategyHistory, MemberAccount, LoyaltyPoint, AssociationRun, ProductAssociation |
+| `entity/` | 20 lớp ánh xạ 20 bảng SQL (JPA): Customer, Order, OrderItem, Product, Strategy, Category, Role, User, Shift, CustomerSegment, ModelVersion, DriftCheck, StrategyHistory, MemberAccount, LoyaltyPoint, AssociationRun, ProductAssociation, StockReceipt, StockLot, OrderItemLot |
 | `repository/` | truy vấn JPA cho các bảng bán hàng dùng nhiều (khách, sản phẩm, hóa đơn, dòng hàng, ưu đãi) |
 | `service/`, `controller/` | nghiệp vụ và API; truy vấn thống kê viết SQL trực tiếp bằng `JdbcTemplate` |
 | `security/`, `dto/` | đăng nhập, phân quyền; dữ liệu trao đổi với trình duyệt và dịch vụ AI |
@@ -242,6 +242,21 @@ Control*: 60 hóa đơn mua chung, confidence 65%, lift 89,9.
 - **POS:** khi thêm hàng vào giỏ, khung **🛍️ Khách hay mua kèm** hiện tối đa 3 sản phẩm còn hàng có confidence cao nhất, kèm lý do;
   bấm **+ Thêm** để đưa vào hóa đơn. Dòng hóa đơn thêm từ gợi ý được đánh dấu `order_items.from_suggestion = 1`.
 - **Đo hiệu quả:** tab Gợi ý mua kèm cho biết bao nhiêu hóa đơn tại quầy có món từ gợi ý, số lượng và doanh thu từ gợi ý.
+
+## Kho theo lô & hạn sử dụng
+
+Mỹ phẩm có hạn dùng, nên tồn kho được quản lý theo **lô** ([InventoryService](frontend-pos/src/main/java/com/example/PhanTichAI/service/InventoryService.java),
+migration `004_inventory_lots.sql`, bảng `stock_receipts`, `stock_lots`, `order_item_lots`):
+
+- `products.stock_quantity` luôn bằng tổng số còn lại của các lô (test `everyProductStockEqualsItsLots`).
+- **Bán được** = các lô chưa hết hạn. POS chỉ hiện và chỉ cho bán số này; khi thanh toán, máy lấy **lô có hạn gần nhất trước**
+  (FEFO), khóa lô trong giao dịch, và ghi mỗi dòng hóa đơn lấy từ lô nào (truy vết khi cần thu hồi một lô lỗi).
+- Trang quản trị → tab **Kho & hạn dùng**: cảnh báo lô còn **≤ 60 ngày** hoặc đã hết hạn, sản phẩm còn **≤ 10** đơn vị bán được,
+  **phiếu nhập** nhiều dòng (sản phẩm, số lô, hạn dùng, số lượng, giá nhập; không nhận hàng đã hết hạn), **xuất hủy** lô hết hạn/hư hỏng
+  kèm lý do, danh sách mọi lô.
+- **Lô tồn đầu kỳ (DEMO):** dữ liệu nền không có hạn dùng, nên hàng có sẵn (100/sản phẩm) được chuyển thành lô `DK-…` với
+  **hạn dùng giả lập** (`is_demo = 1`, có nhãn DEMO trên trang): đa số còn 4–24 tháng, 8 lô sắp hết hạn, 4 lô (20 đơn vị) đã hết hạn
+  để minh họa cảnh báo. Hàng nhập qua phiếu nhập dùng hạn dùng thật.
 
 ## Kiểm thử
 

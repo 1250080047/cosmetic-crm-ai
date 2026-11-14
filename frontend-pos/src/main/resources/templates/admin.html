@@ -57,6 +57,7 @@
             <button class="nav-item" data-tab="orders"><svg class="icon"><use href="#i-receipt"/></svg><span>Lịch sử hóa đơn</span></button>
             <button class="nav-item" data-tab="revenue"><svg class="icon"><use href="#i-wallet"/></svg><span>Doanh thu & so sánh</span></button>
             <button class="nav-item" data-tab="products"><svg class="icon"><use href="#i-box"/></svg><span>Sản phẩm & tồn kho</span></button>
+            <button class="nav-item" data-tab="stock"><svg class="icon"><use href="#i-box"/></svg><span>Kho & hạn dùng</span></button>
             <button class="nav-item" data-tab="customers"><svg class="icon"><use href="#i-users"/></svg><span>Khách hàng</span></button>
             <button class="nav-item" data-tab="shifts"><svg class="icon"><use href="#i-receipt"/></svg><span>Ca làm việc</span></button>
             <button class="nav-item" data-tab="users" data-admin-only hidden><svg class="icon"><use href="#i-users"/></svg><span>Tài khoản & quyền</span></button>
@@ -189,6 +190,35 @@
             <section id="tab-products" class="tab-panel" hidden aria-label="Sản phẩm và tồn kho">
                 <div class="stats-grid" id="inventoryKpis"></div>
                 <section class="card"><div class="card-heading"><div><h2>Danh mục sản phẩm</h2><p class="muted">Tồn kho hiện tại; ngưỡng cảnh báo mặc định ≤ 10. Sửa giá áp dụng cho lần bán tiếp theo.</p></div><button class="button button-secondary" id="addCategory">Thêm danh mục</button></div><div class="orders-toolbar"><label class="search-field"><input id="productSearch" type="search" placeholder="Tên, mã vạch, mã sản phẩm…" aria-label="Tìm sản phẩm"></label><label class="payment-filter">Tồn kho<select id="stockFilter"><option value="active">Đang bán</option><option value="">Tất cả (gồm hàng lịch sử)</option><option value="low">Còn ≤ 10</option><option value="out">Hết hàng</option><option value="inactive">Ngừng bán</option></select></label><label class="payment-filter">Nhóm hàng<select id="productCategory"><option value="">Tất cả nhóm</option></select></label><span id="productCount" class="result-count"></span></div><div class="table-scroll"><table><thead><tr><th>Sản phẩm</th><th>Danh mục</th><th class="numeric">Giá bán</th><th class="numeric">Giá vốn hiện tại</th><th class="numeric">Tồn</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="productBody"></tbody></table></div><div class="card-footer"><span id="productPageInfo"></span><div class="pagination"><button class="button button-secondary button-small" id="productPrevious">Trước</button><button class="button button-secondary button-small" id="productNext">Sau</button></div></div></section>
+            </section>
+            <section id="tab-stock" class="tab-panel" hidden aria-label="Kho và hạn dùng">
+                <div class="stats-grid" id="stockStats"></div>
+                <p class="growth-warning" id="stockDemoNote" hidden></p>
+                <section class="card">
+                    <div class="card-heading"><div><h2>Cảnh báo hạn dùng</h2><p class="muted" id="expiryCaption">Lô còn hạn ≤ 60 ngày hoặc đã hết hạn nhưng chưa xuất hủy. Hàng hết hạn không bán được ở POS.</p></div></div>
+                    <div class="table-scroll"><table><thead><tr><th>Sản phẩm</th><th>Lô</th><th>Hạn dùng</th><th class="numeric">Còn</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="expiryBody"></tbody></table></div>
+                </section>
+                <section class="card">
+                    <div class="card-heading"><div><h2>Sắp hết hàng</h2><p class="muted" id="lowStockCaption">Sản phẩm đang bán còn ≤ 10 đơn vị còn hạn.</p></div></div>
+                    <div class="table-scroll"><table><thead><tr><th>Sản phẩm</th><th class="numeric">Còn bán được</th><th class="numeric">Tồn (kể cả hết hạn)</th><th>Thao tác</th></tr></thead><tbody id="lowStockBody"></tbody></table></div>
+                </section>
+                <section class="card" id="receiptCard">
+                    <div class="card-heading"><div><h2>Nhập hàng theo lô</h2><p class="muted">Mỗi dòng là một lô: số lô và hạn dùng in trên bao bì. Không nhận hàng đã hết hạn.</p></div></div>
+                    <form id="receiptForm" class="growth-form" novalidate>
+                        <div class="form-row"><label>Nhà cung cấp<input name="supplier" maxlength="150" placeholder="VD: Công ty phân phối ABC"></label><label>Ghi chú<input name="note" maxlength="300"></label></div>
+                        <div class="growth-lines" id="receiptLines"></div>
+                        <datalist id="stockProducts"></datalist>
+                        <p class="form-error" id="receiptError" hidden></p>
+                        <div class="dialog-actions"><button type="button" class="button button-secondary" id="addReceiptLine">+ Thêm dòng</button><button type="submit" class="button button-primary" id="saveReceipt">Lưu phiếu nhập</button></div>
+                    </form>
+                    <h3 class="growth-subheading">Phiếu nhập gần đây</h3>
+                    <div class="table-scroll"><table><thead><tr><th>Số phiếu</th><th>Ngày</th><th>Nhà cung cấp</th><th class="numeric">Số lô</th><th class="numeric">Số lượng</th><th class="numeric">Giá trị</th><th>Người lập</th></tr></thead><tbody id="receiptBody"></tbody></table></div>
+                </section>
+                <section class="card">
+                    <div class="card-heading"><div><h2>Tất cả lô hàng</h2><p class="muted">Lô còn hàng trước, hạn gần nhất trước — đúng thứ tự POS lấy hàng khi bán (FEFO).</p></div></div>
+                    <div class="orders-toolbar"><label class="search-field"><input id="lotSearch" type="search" placeholder="Tên, mã sản phẩm, số lô…" aria-label="Tìm lô hàng"></label><span class="result-count" id="lotCount"></span></div>
+                    <div class="table-scroll"><table><thead><tr><th>Sản phẩm</th><th>Lô</th><th>Phiếu nhập</th><th>Hạn dùng</th><th class="numeric">Nhập</th><th class="numeric">Còn</th><th class="numeric">Đã hủy</th><th>Trạng thái</th></tr></thead><tbody id="lotBody"></tbody></table></div>
+                </section>
             </section>
             <section id="tab-customers" class="tab-panel" hidden aria-label="Khách hàng">
                 <section class="card"><div class="card-heading"><div><h2>Khách hàng & lịch sử ghi nhận</h2><p class="muted">Tìm theo mã khách (KH…), tên hoặc số điện thoại. Số đơn và doanh thu tính trực tiếp từ hóa đơn.</p></div></div><div class="orders-toolbar"><label class="search-field"><input id="customerSearch" type="search" placeholder="Tên, số điện thoại, mã khách…" aria-label="Tìm khách hàng"></label><label class="payment-filter">Nhóm<select id="customerSegment"><option value="">Tất cả nhóm</option></select></label><span class="result-count" id="customerCount"></span></div><div class="table-scroll"><table><thead><tr><th>Khách hàng</th><th>Điện thoại</th><th>Nhóm</th><th class="numeric">Số hóa đơn</th><th class="numeric">Doanh thu từ hóa đơn</th><th>Mua lần đầu</th><th>Lần mua cuối</th></tr></thead><tbody id="customerBody"></tbody></table></div><div class="card-footer"><span id="customerPageInfo"></span><div class="pagination"><button class="button button-secondary button-small" id="customerPrevious">Trước</button><button class="button button-secondary button-small" id="customerNext">Sau</button></div></div></section>

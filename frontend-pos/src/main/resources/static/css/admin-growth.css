@@ -17,3 +17,7 @@
 @media (max-width: 760px) { .growth-line { grid-template-columns: 1fr 1fr; } }
 .growth-note { font-size: 12.5px; color: #64748b; margin: 6px 0 0; }
 .growth-warning { padding: 10px 12px; border-radius: 8px; background: #fff4db; color: #7a4a00; font-size: 13px; margin: 0 0 12px; }
+.growth-subheading { font-size: 14px; margin: 20px 0 8px; }
+.growth-form .form-error { margin: 0; color: #b42318; font-size: 13px; }
+.growth-form .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.growth-line > button { align-self: end; margin-bottom: 2px; }

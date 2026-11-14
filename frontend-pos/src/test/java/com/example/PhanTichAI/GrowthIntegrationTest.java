@@ -132,6 +132,80 @@ class GrowthIntegrationTest {
         assertThat(customer.path("can_redeem").asBoolean()).as("typed phone number, not a scan").isFalse();
     }
 
+    // ---- 3. stock by lot and expiry date ----------------------------------------------------------
+    @Autowired com.example.PhanTichAI.service.InventoryService inventory;
+    @Autowired jakarta.persistence.EntityManager entityManager;
+
+    @Test void everyProductStockEqualsItsLots() {
+        Integer mismatched = jdbc.queryForObject("""
+                SELECT COUNT(*) FROM products p
+                WHERE p.stock_quantity <> COALESCE((SELECT SUM(quantity_remaining) FROM stock_lots l WHERE l.product_id = p.id), 0)""", Integer.class);
+        assertThat(mismatched).isZero();
+    }
+
+    @Test @Transactional void saleTakesTheLotThatExpiresFirstAndSkipsExpiredLots() {
+        Integer product = jdbc.queryForObject("""
+                SELECT TOP 1 p.id FROM products p WHERE p.is_active = 1 AND p.stock_quantity >= 10
+                  AND EXISTS (SELECT 1 FROM stock_lots l WHERE l.product_id = p.id AND l.quantity_remaining > 0 AND l.expiry_date < CAST(SYSDATETIME() AS DATE))
+                ORDER BY p.id""", Integer.class);
+        int stockBefore = jdbc.queryForObject("SELECT stock_quantity FROM products WHERE id = ?", Integer.class, product);
+        int sellableBefore = inventory.sellable().getOrDefault(product, 0);
+        assertThat(sellableBefore).as("expired units are not sellable").isLessThan(stockBefore);
+        // a new lot that expires in 5 days must be sold before the older lot that expires later
+        var received = inventory.receive(new com.example.PhanTichAI.service.InventoryService.Receipt("Kiểm tra", null, List.of(
+                new com.example.PhanTichAI.service.InventoryService.Line(product, "TEST-EARLY", java.time.LocalDate.now().plusDays(5), 3, null))), null);
+        assertThat(received.get("units")).isEqualTo(3);
+        assertThat(jdbc.queryForObject("SELECT stock_quantity FROM products WHERE id = ?", Integer.class, product)).isEqualTo(stockBefore + 3);
+
+        CheckoutRequest request = new CheckoutRequest();
+        CheckoutRequest.ItemDto item = new CheckoutRequest.ItemDto();
+        item.setProductId(product); item.setQuantity(2);
+        request.setItems(List.of(item)); request.setPaymentMethod("CASH");
+        String invoice = (String) checkout.checkout(request).get("transaction_no");
+        entityManager.flush();   // the stock change of the product entity is written at commit in real use
+        var taken = jdbc.queryForList("""
+                SELECT l.lot_no, x.quantity FROM order_item_lots x JOIN order_items i ON i.id = x.order_item_id JOIN stock_lots l ON l.id = x.lot_id
+                WHERE i.transaction_no = ?""", invoice);
+        assertThat(taken).singleElement().satisfies(row -> {
+            assertThat(row.get("lot_no")).isEqualTo("TEST-EARLY");
+            assertThat(row.get("quantity")).isEqualTo(2);
+        });
+        assertThat(jdbc.queryForObject("SELECT stock_quantity FROM products WHERE id = ?", Integer.class, product)).isEqualTo(stockBefore + 1);
+        assertThat(inventory.sellable().get(product)).isEqualTo(sellableBefore + 1);
+
+        // more than the sellable units: refused even though the expired lot is still on the shelf
+        CheckoutRequest tooMuch = new CheckoutRequest();
+        CheckoutRequest.ItemDto all = new CheckoutRequest.ItemDto();
+        all.setProductId(product); all.setQuantity(sellableBefore + 2);
+        tooMuch.setItems(List.of(all)); tooMuch.setPaymentMethod("CASH");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> checkout.checkout(tooMuch)).hasMessageContaining("còn hạn sử dụng");
+    }
+
+    @Test @Transactional void disposingAnExpiredLotTakesItOutOfStock() {
+        var lot = jdbc.queryForMap("""
+                SELECT TOP 1 id, product_id, quantity_remaining FROM stock_lots
+                WHERE quantity_remaining > 0 AND expiry_date < CAST(SYSDATETIME() AS DATE) ORDER BY id""");
+        int product = ((Number) lot.get("product_id")).intValue(), quantity = ((Number) lot.get("quantity_remaining")).intValue();
+        int before = jdbc.queryForObject("SELECT stock_quantity FROM products WHERE id = ?", Integer.class, product);
+        inventory.dispose(((Number) lot.get("id")).intValue(), "Hết hạn sử dụng", null);
+        assertThat(jdbc.queryForObject("SELECT stock_quantity FROM products WHERE id = ?", Integer.class, product)).isEqualTo(before - quantity);
+        assertThat(jdbc.queryForObject("SELECT disposed_quantity FROM stock_lots WHERE id = ?", Integer.class, lot.get("id"))).isEqualTo(quantity);
+    }
+
+    @Test void managerSeesStockAlertsLotsAndReceipts() throws Exception {
+        JsonNode overview = get("/api/admin/stock/overview");
+        assertThat(overview.path("summary").path("expiredLots").asInt()).isGreaterThanOrEqualTo(0);
+        assertThat(overview.path("rules").path("expiry_warning_days").asInt()).isEqualTo(60);
+        for (JsonNode lot : overview.path("expiring")) assertThat(lot.path("daysLeft").asInt()).isLessThanOrEqualTo(60);
+        assertThat(get("/api/admin/stock/lots?search=DK").size()).isPositive();
+        assertThat(get("/api/admin/stock/receipts").isArray()).isTrue();
+        // the POS only offers units that have not expired
+        JsonNode products = get("/api/pos/products");
+        var sellable = inventory.sellable();
+        for (JsonNode product : products)
+            assertThat(product.path("stockQuantity").asInt()).isEqualTo(sellable.getOrDefault(product.path("id").asInt(), 0));
+    }
+
     @Test @Transactional void productAddedFromASuggestionIsMarkedOnTheInvoice() {
         Integer product = jdbc.queryForObject("SELECT TOP 1 id FROM products WHERE is_active = 1 AND stock_quantity > 5 ORDER BY id", Integer.class);
         CheckoutRequest request = new CheckoutRequest();

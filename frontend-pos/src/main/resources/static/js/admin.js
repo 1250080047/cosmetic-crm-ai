@@ -161,6 +161,7 @@
             orders: ['Lịch sử hóa đơn', 'Lịch sử hóa đơn', 'Tra cứu giao dịch đã ghi nhận trong cơ sở dữ liệu cửa hàng.'],
             revenue: ['Doanh thu & so sánh', 'Hiểu biến động doanh thu', 'So sánh tháng hoặc năm, xác định yếu tố đóng góp và chọn hướng kiểm tra.'],
             products: ['Sản phẩm & tồn kho', 'Danh mục và tồn kho', 'Quản lý thông tin bán hàng và theo dõi sản phẩm cần bổ sung.'],
+            stock: ['Kho & hạn dùng', 'Nhập hàng theo lô, hạn sử dụng', 'Bán lô có hạn gần nhất trước, cảnh báo hàng sắp hết hạn hoặc sắp hết, xuất hủy hàng hết hạn hoặc hư hỏng.'],
             customers: ['Khách hàng', 'Hiểu lịch sử khách hàng', 'Tra cứu khách theo mã, nhóm và lịch sử mua hàng.'],
             shifts: ['Ca làm việc', 'Ca làm việc & báo cáo kết ca', 'Theo dõi nhân viên đứng quầy, doanh thu từng ca, tiền mặt và quà tặng đã phát.'],
             users: ['Tài khoản & quyền', 'Đúng người, đúng quyền', 'Quản lý tài khoản và quyền truy cập của nhân sự cửa hàng.']

@@ -29,15 +29,17 @@ public class ProductSuggestionService {
                 SELECT TOP (:limit) consequent_id, product_name, unit_price, stock_quantity, image_url, category_id,
                        confidence, lift, together_count, antecedent_id, because_name
                 FROM (
-                    SELECT r.consequent_id, p.product_name, p.unit_price, p.stock_quantity, p.image_url, p.category_id,
+                    SELECT r.consequent_id, p.product_name, p.unit_price, s.sellable AS stock_quantity, p.image_url, p.category_id,
                            r.confidence, r.lift, r.together_count, r.antecedent_id, a.product_name AS because_name,
                            ROW_NUMBER() OVER (PARTITION BY r.consequent_id ORDER BY r.confidence DESC, r.lift DESC) AS pick
                     FROM product_associations r
                     JOIN products p ON p.id = r.consequent_id
                     JOIN products a ON a.id = r.antecedent_id
+                    JOIN (""" + InventoryService.SELLABLE_SQL + """
+                    ) s ON s.product_id = r.consequent_id
                     WHERE r.run_id = (SELECT MAX(id) FROM association_runs)
                       AND r.antecedent_id IN (:ids) AND r.consequent_id NOT IN (:ids)
-                      AND p.is_active = 1 AND p.stock_quantity > 0
+                      AND p.is_active = 1 AND s.sellable > 0
                 ) ranked
                 WHERE pick = 1
                 ORDER BY confidence DESC, lift DESC, consequent_id""";

@@ -22,21 +22,28 @@ public class PosCheckoutService {
     private final CustomerOfferService offers;
     private final ShiftService shifts;
     private final LoyaltyService loyalty;
+    private final InventoryService inventory;
 
     public PosCheckoutService(ProductRepository products, CustomerRepository customers, OrderRepository orders,
                               OrderItemRepository orderItems, CustomerOfferService offers) {
-        this(products, customers, orders, orderItems, offers, null, null);
+        this(products, customers, orders, orderItems, offers, null, null, null);
     }
     public PosCheckoutService(ProductRepository products, CustomerRepository customers, OrderRepository orders,
                               OrderItemRepository orderItems, CustomerOfferService offers, ShiftService shifts) {
-        this(products, customers, orders, orderItems, offers, shifts, null);
+        this(products, customers, orders, orderItems, offers, shifts, null, null);
+    }
+    public PosCheckoutService(ProductRepository products, CustomerRepository customers, OrderRepository orders,
+                              OrderItemRepository orderItems, CustomerOfferService offers, ShiftService shifts,
+                              LoyaltyService loyalty) {
+        this(products, customers, orders, orderItems, offers, shifts, loyalty, null);
     }
     @org.springframework.beans.factory.annotation.Autowired
     public PosCheckoutService(ProductRepository products, CustomerRepository customers, OrderRepository orders,
                               OrderItemRepository orderItems, CustomerOfferService offers, ShiftService shifts,
-                              LoyaltyService loyalty) {
+                              LoyaltyService loyalty, InventoryService inventory) {
         this.shifts = shifts;
         this.loyalty = loyalty;
+        this.inventory = inventory;
         this.products = products;
         this.customers = customers;
         this.orders = orders;
@@ -81,6 +88,8 @@ public class PosCheckoutService {
             throw new IllegalArgumentException("Số lượng quà vượt quá suất tặng của ưu đãi.");
 
         // Paid and gifted rows consume the same SKU stock. Lock once in ID order.
+        // Only lots that have not expired can be sold (checked again under lock when the lots are taken).
+        Map<Integer, Integer> sellable = inventory == null ? null : inventory.sellable();
         Map<Integer, Product> locked = new LinkedHashMap<>();
         quantities.keySet().stream().sorted().forEach(id -> {
             Product product = products.findByIdForUpdate(id)
@@ -89,6 +98,9 @@ public class PosCheckoutService {
                 throw new IllegalArgumentException("Sản phẩm đang tạm ngưng bán: " + product.getProductName());
             if (product.getStockQuantity() == null || product.getStockQuantity() < quantities.get(id))
                 throw new IllegalArgumentException("Không đủ tồn kho cho cả phần mua và phần tặng: " + product.getProductName());
+            if (sellable != null && sellable.getOrDefault(id, 0) < quantities.get(id))
+                throw new IllegalArgumentException("Không đủ hàng còn hạn sử dụng: " + product.getProductName()
+                        + " (còn " + sellable.getOrDefault(id, 0) + ").");
             if (product.getUnitPrice() == null || product.getUnitPrice().signum() < 0)
                 throw new IllegalArgumentException("Giá sản phẩm chưa hợp lệ: " + product.getProductName());
             locked.put(id, product);
@@ -156,6 +168,8 @@ public class PosCheckoutService {
             item.setRevenue(line.unitPrice().multiply(BigDecimal.valueOf(line.quantity())));
             item.setFromSuggestion(line.suggested());
             orderItems.save(item);
+            if (inventory != null)   // earliest expiry first, expired lots skipped; which lots is kept for recalls
+                inventory.allocate(item.getId(), line.product().getId(), line.quantity(), line.product().getProductName());
             receiptLines.add(Map.of("product_id", line.product().getId(), "product_name", line.product().getProductName(),
                     "quantity", line.quantity(), "unit_price", line.unitPrice(), "gift", line.gift(), "line_total", item.getRevenue()));
         }

@@ -100,8 +100,151 @@
         } finally { button.disabled = false; }
     });
 
+    // ---- Stock by lot and expiry date -----------------------------------------------------------
+    const stock = { products: null, byLabel: new Map(), lotTimer: null };
+    const day = (value) => value ? new Date(value).toLocaleDateString('vi-VN') : 'Không ghi hạn';
+    function expiryBadge(lot) {
+        if (Number(lot.remaining) <= 0) return el('span', 'Đã hết / đã hủy', 'growth-badge muted');
+        if (lot.daysLeft == null) return el('span', 'Không ghi hạn', 'growth-badge muted');
+        if (lot.daysLeft < 0) return el('span', 'Hết hạn ' + count(-lot.daysLeft) + ' ngày', 'growth-badge danger');
+        if (lot.daysLeft <= 60) return el('span', 'Còn ' + count(lot.daysLeft) + ' ngày', 'growth-badge warn');
+        return el('span', 'Còn hạn', 'growth-badge ok');
+    }
+    function lotLabel(lot) {
+        const box = el('span', lot.lotNo);
+        if (lot.demo) { const tag = el('span', 'DEMO', 'growth-badge muted'); tag.title = 'Hạn dùng giả lập của lô tồn đầu kỳ'; box.append(' ', tag); }
+        return box;
+    }
+    const productCell = (row) => { const box = el('div'); box.append(el('strong', row.productName), el('div', row.barcode || ('#' + row.productId), 'muted')); return box; };
+    async function loadStock() {
+        const [overview, receipts] = await Promise.all([api('/stock/overview'), api('/stock/receipts')]);
+        renderStockOverview(overview);
+        renderReceipts(receipts);
+        await loadLots();
+        if (!stock.products) await loadStockProducts();
+        if (!$('receiptLines').children.length) addReceiptLine(null, false);
+    }
+    function renderStockOverview(data) {
+        const s = data.summary, rules = data.rules || {};
+        $('stockStats').replaceChildren(
+            stat('Lô sắp hết hạn', count(s.expiringLots), count(s.expiringUnits) + ' đơn vị, hạn còn ≤ ' + (rules.expiry_warning_days ?? 60) + ' ngày'),
+            stat('Lô đã hết hạn', count(s.expiredLots), count(s.expiredUnits) + ' đơn vị không bán được — cần xuất hủy'),
+            stat('Sản phẩm sắp hết hàng', count(s.lowStockProducts), 'còn ≤ ' + (rules.low_stock ?? 10) + ' đơn vị còn hạn'),
+            stat('Giá trị tồn kho', money(s.stockValue), 'theo giá nhập của từng lô'));
+        $('stockDemoNote').hidden = !Number(s.demoLots);
+        $('stockDemoNote').textContent = 'Có ' + count(s.demoLots) + ' lô tồn đầu kỳ (nhãn DEMO) với hạn dùng GIẢ LẬP để minh họa cảnh báo, vì dữ liệu nền không có hạn dùng. Hàng nhập mới qua phiếu nhập dùng hạn dùng thật.';
+        rows('expiryBody', data.expiring || [], [
+            { value: productCell }, { value: lotLabel }, { value: (lot) => day(lot.expiryDate) },
+            { numeric: true, value: (lot) => count(lot.remaining) }, { value: expiryBadge },
+            { value: (lot) => disposeButton(lot, lot.daysLeft < 0 ? 'Hết hạn sử dụng' : '') }
+        ], 'Không có lô nào sắp hết hạn.');
+        rows('lowStockBody', data.lowStock || [], [
+            { value: productCell }, { numeric: true, value: (row) => count(row.sellable) }, { numeric: true, value: (row) => count(row.stock) },
+            { value: (row) => { const button = el('button', 'Nhập hàng', 'button button-secondary button-small'); button.type = 'button';
+                button.addEventListener('click', () => { addReceiptLine(row.productId); $('receiptCard').scrollIntoView({ behavior: 'smooth' }); }); return button; } }
+        ], 'Không có sản phẩm nào sắp hết hàng.');
+    }
+    function disposeButton(lot, defaultReason) {
+        if (Number(lot.remaining) <= 0) return '';
+        const button = el('button', 'Xuất hủy', 'button button-secondary button-small');
+        button.type = 'button';
+        button.addEventListener('click', async () => {
+            const reason = window.prompt('Xuất hủy ' + count(lot.remaining) + ' đơn vị của lô ' + lot.lotNo + ' (' + lot.productName + ').\nLý do:', defaultReason || 'Hư hỏng');
+            if (reason == null) return;
+            button.disabled = true;
+            try {
+                const result = await post('/stock/lots/' + lot.id + '/dispose', { reason });
+                notify('Đã xuất hủy ' + count(result.disposed) + ' đơn vị lô ' + lot.lotNo + '.');
+                await loadStock();
+            } catch (error) { notify('Chưa xuất hủy được. ' + error.message, true); button.disabled = false; }
+        });
+        return button;
+    }
+    function renderReceipts(list) {
+        rows('receiptBody', list || [], [
+            { value: (r) => r.receiptNo }, { value: (r) => new Date(r.createdAt).toLocaleString('vi-VN') }, { value: (r) => r.supplier || '—' },
+            { numeric: true, value: (r) => count(r.lines) }, { numeric: true, value: (r) => count(r.units) }, { numeric: true, value: (r) => money(r.value) },
+            { value: (r) => r.createdBy || '—' }
+        ], 'Chưa có phiếu nhập nào.');
+    }
+    async function loadLots() {
+        const search = $('lotSearch').value.trim();
+        try {
+            const lots = await api('/stock/lots?search=' + encodeURIComponent(search));
+            $('lotCount').textContent = count(lots.length) + (lots.length >= 300 ? '+ lô (hiện 300 lô đầu)' : ' lô');
+            rows('lotBody', lots, [
+                { value: productCell }, { value: lotLabel }, { value: (lot) => lot.receiptNo || 'Tồn đầu kỳ' }, { value: (lot) => day(lot.expiryDate) },
+                { numeric: true, value: (lot) => count(lot.received) }, { numeric: true, value: (lot) => count(lot.remaining) },
+                { numeric: true, value: (lot) => count(lot.disposed) }, { value: expiryBadge }
+            ], 'Không có lô khớp từ khóa.');
+        } catch (error) { failed('lotBody', 8, error.message); }
+    }
+    async function loadStockProducts() {
+        const data = await api('/products?filter=active&size=200');
+        stock.products = data.items || [];
+        stock.byLabel.clear();
+        const list = $('stockProducts');
+        list.replaceChildren();
+        stock.products.forEach((product) => {
+            const label = (product.barcode || ('#' + product.id)) + ' · ' + product.productName;
+            stock.byLabel.set(label, product);
+            list.append(new Option(label, label));
+        });
+    }
+    function addReceiptLine(productId = null, focus = true) {
+        const line = el('div', null, 'growth-line');
+        const field = (label, input) => { const wrap = el('label', label); wrap.append(input); return wrap; };
+        const product = document.createElement('input');
+        product.setAttribute('list', 'stockProducts'); product.name = 'product'; product.placeholder = 'Gõ tên hoặc mã SP…'; product.required = true;
+        if (productId != null) {
+            const found = (stock.products || []).find((item) => item.id === productId);
+            if (found) product.value = (found.barcode || ('#' + found.id)) + ' · ' + found.productName;
+        }
+        const lot = document.createElement('input'); lot.name = 'lot'; lot.maxLength = 50; lot.placeholder = 'VD: L2611A'; lot.required = true;
+        const expiry = document.createElement('input'); expiry.type = 'date'; expiry.name = 'expiry';
+        const tomorrow = new Date(Date.now() + 86400000); expiry.min = tomorrow.toISOString().slice(0, 10);
+        const quantity = document.createElement('input'); quantity.type = 'number'; quantity.name = 'quantity'; quantity.min = '1'; quantity.max = '100000'; quantity.step = '1'; quantity.required = true;
+        const cost = document.createElement('input'); cost.type = 'number'; cost.name = 'cost'; cost.min = '0'; cost.step = '1'; cost.placeholder = 'đ / đơn vị';
+        const remove = el('button', '×', 'button button-secondary button-small'); remove.type = 'button'; remove.setAttribute('aria-label', 'Bỏ dòng này');
+        remove.addEventListener('click', () => { line.remove(); if (!$('receiptLines').children.length) addReceiptLine(null, false); });
+        line.append(field('Sản phẩm', product), field('Số lô', lot), field('Hạn dùng', expiry), field('Số lượng', quantity), field('Giá nhập', cost), remove);
+        $('receiptLines').append(line);
+        if (focus) (productId != null ? lot : product).focus({ preventScroll: productId == null });
+    }
+    function readReceipt() {
+        const form = $('receiptForm');
+        const lines = [...$('receiptLines').children].map((line, index) => {
+            const value = (name) => line.querySelector('[name="' + name + '"]').value.trim();
+            const product = stock.byLabel.get(value('product'));
+            if (!product) throw new Error('Dòng ' + (index + 1) + ': chọn sản phẩm trong danh sách gợi ý.');
+            return { productId: product.id, lotNo: value('lot'), expiryDate: value('expiry') || null,
+                quantity: Number(value('quantity')) || 0, unitCost: value('cost') === '' ? null : Number(value('cost')) };
+        });
+        return { supplier: form.elements.supplier.value.trim(), note: form.elements.note.value.trim(), lines };
+    }
+    $('addReceiptLine').addEventListener('click', () => addReceiptLine());
+    $('receiptForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const error = $('receiptError'), button = $('saveReceipt');
+        error.hidden = true;
+        let receipt;
+        try { receipt = readReceipt(); } catch (problem) { error.textContent = problem.message; error.hidden = false; return; }
+        if (receipt.lines.some((line) => !line.expiryDate) && !window.confirm('Có dòng chưa ghi hạn dùng. Lô không ghi hạn sẽ được bán sau cùng. Vẫn lưu?')) return;
+        button.disabled = true;
+        try {
+            const result = await post('/stock/receipts', receipt);
+            notify('Đã lưu phiếu ' + result.receipt_no + ': ' + count(result.lines) + ' lô, ' + count(result.units) + ' đơn vị.');
+            $('receiptForm').reset();
+            $('receiptLines').replaceChildren();
+            addReceiptLine(null, false);
+            await loadStock();
+        } catch (problem) { error.textContent = problem.message; error.hidden = false; }
+        finally { button.disabled = false; }
+    });
+    $('lotSearch').addEventListener('input', () => { clearTimeout(stock.lotTimer); stock.lotTimer = setTimeout(loadLots, 300); });
+
     // ---- Tab wiring -------------------------------------------------------------------------------
-    const loaders = { basket: loadBasket };
+    const loaders = { basket: loadBasket, stock: loadStock };
     const loaded = new Set();
     let current = 'overview';
     async function load(tab, force = false) {
