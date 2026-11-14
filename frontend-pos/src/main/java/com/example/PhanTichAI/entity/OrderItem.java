@@ -28,7 +28,14 @@ public class OrderItem {
     @Column(name = "revenue", nullable = false, precision = 16, scale = 2)
     private BigDecimal revenue;
 
+    /** Added by the cashier from the "bought together" suggestions (to measure whether suggestions help). */
+    @Column(name = "from_suggestion", nullable = false)
+    private Boolean fromSuggestion = false;
+
     public OrderItem() {}
+
+    public Boolean getFromSuggestion() { return fromSuggestion; }
+    public void setFromSuggestion(Boolean fromSuggestion) { this.fromSuggestion = fromSuggestion; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

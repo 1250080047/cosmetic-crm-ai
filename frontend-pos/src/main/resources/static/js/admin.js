@@ -157,6 +157,7 @@
             overview: ['Tổng quan', 'Tổng quan kinh doanh', 'Theo dõi hoạt động cửa hàng và hiểu rõ từng nhóm khách hàng.'],
             model: ['Mô hình phân cụm', 'Mô hình nền & kiểm tra lệch', 'Mô hình chỉ học một lần trên dữ liệu nền; khách mới được đặt lên thước đo cũ.'],
             strategies: ['Chiến lược ưu đãi', 'Ưu đãi đúng người, đúng lúc', 'Xem và điều chỉnh các chiến lược đang được lưu cho cửa hàng.'],
+            basket: ['Gợi ý mua kèm', 'Sản phẩm hay được mua cùng nhau', 'Phân tích giỏ hàng: khách mua món này thường mua thêm món nào — gợi ý cho thu ngân ở POS.'],
             orders: ['Lịch sử hóa đơn', 'Lịch sử hóa đơn', 'Tra cứu giao dịch đã ghi nhận trong cơ sở dữ liệu cửa hàng.'],
             revenue: ['Doanh thu & so sánh', 'Hiểu biến động doanh thu', 'So sánh tháng hoặc năm, xác định yếu tố đóng góp và chọn hướng kiểm tra.'],
             products: ['Sản phẩm & tồn kho', 'Danh mục và tồn kho', 'Quản lý thông tin bán hàng và theo dõi sản phẩm cần bổ sung.'],

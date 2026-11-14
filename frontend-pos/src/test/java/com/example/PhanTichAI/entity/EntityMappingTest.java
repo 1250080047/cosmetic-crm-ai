@@ -18,32 +18,45 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Every table of database/schema.sql has exactly one entity, and the entity maps exactly the table's columns. */
+/**
+ * Every table of the database (database/schema.sql plus database/migrations/*.sql) has exactly one entity, and the
+ * entity maps exactly the table's columns.
+ */
 class EntityMappingTest {
     private static final Pattern TABLE = Pattern.compile("CREATE TABLE (\\w+) \\((.*?)\\n\\);", Pattern.DOTALL);
-    private static final Pattern COLUMN = Pattern.compile(
-            "^\\s*(\\w+)\\s+(?:INT|BIGINT|VARCHAR|NVARCHAR|NUMERIC|BIT|DATETIME2|DATE)\\b", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+    private static final String TYPES = "(?:INT|BIGINT|SMALLINT|TINYINT|VARCHAR|NVARCHAR|NUMERIC|DECIMAL|BIT|DATETIME2|DATE)\\b";
+    private static final Pattern COLUMN = Pattern.compile("^\\s*(\\w+)\\s+" + TYPES, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+    private static final Pattern ADDED = Pattern.compile("ALTER TABLE (\\w+) ADD (\\w+) " + TYPES, Pattern.CASE_INSENSITIVE);
 
     @Test
     void everyTableHasOneEntityWithTheSameColumns() throws Exception {
         Map<String, Set<String>> schema = schemaColumns();
         Map<String, Set<String>> entities = entityColumns();
-        assertThat(schema).hasSize(15);
+        assertThat(schema).hasSize(17);
         assertThat(entities.keySet()).containsExactlyInAnyOrderElementsOf(schema.keySet());
         schema.forEach((table, columns) ->
                 assertThat(entities.get(table)).as("columns of " + table).containsExactlyInAnyOrderElementsOf(columns));
     }
 
     private static Map<String, Set<String>> schemaColumns() throws Exception {
-        Path file = Path.of(System.getProperty("user.dir")).resolve("../database/schema.sql").normalize();
-        String sql = Files.readString(file, StandardCharsets.UTF_8);
+        Path database = Path.of(System.getProperty("user.dir")).resolve("../database").normalize();
+        List<Path> files = new ArrayList<>(List.of(database.resolve("schema.sql")));
+        try (var migrations = Files.list(database.resolve("migrations"))) {
+            migrations.filter(file -> file.toString().endsWith(".sql")).sorted().forEach(files::add);
+        }
         Map<String, Set<String>> result = new TreeMap<>();
-        Matcher table = TABLE.matcher(sql);
-        while (table.find()) {
-            Set<String> columns = new TreeSet<>();
-            Matcher column = COLUMN.matcher(table.group(2));
-            while (column.find()) columns.add(column.group(1).toLowerCase(Locale.ROOT));
-            result.put(table.group(1).toLowerCase(Locale.ROOT), columns);
+        for (Path file : files) {
+            String sql = Files.readString(file, StandardCharsets.UTF_8);
+            Matcher table = TABLE.matcher(sql);
+            while (table.find()) {
+                Set<String> columns = new TreeSet<>();
+                Matcher column = COLUMN.matcher(table.group(2));
+                while (column.find()) columns.add(column.group(1).toLowerCase(Locale.ROOT));
+                result.merge(table.group(1).toLowerCase(Locale.ROOT), columns, (old, again) -> { old.addAll(again); return old; });
+            }
+            Matcher added = ADDED.matcher(sql);
+            while (added.find())
+                result.computeIfAbsent(added.group(1).toLowerCase(Locale.ROOT), name -> new TreeSet<>()).add(added.group(2).toLowerCase(Locale.ROOT));
         }
         return result;
     }

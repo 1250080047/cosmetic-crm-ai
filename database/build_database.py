@@ -53,6 +53,13 @@ def run_batches(cursor, sql: str) -> None:
         cursor.execute("\n".join(batch))
 
 
+def apply_migrations(cursor) -> None:
+    """database/migrations/*.sql in file-name order; each one is safe to run again."""
+    for file in sorted((ROOT / "database" / "migrations").glob("*.sql")):
+        run_batches(cursor, file.read_text(encoding="utf-8-sig"))
+        print(f"Đã áp dụng {file.name}")
+
+
 def insert(cursor, table: str, frame: pd.DataFrame, identity: bool = False) -> None:
     frame = frame.astype(object).where(pd.notna(frame), None)
     columns = ", ".join(frame.columns)
@@ -104,6 +111,7 @@ def main() -> int:
     insert(cursor, "customers", customers)
     insert(cursor, "orders", read("orders.csv", dtype={"transaction_no": str}, parse_dates=["order_date"]))
     insert(cursor, "order_items", read("order_items.csv", dtype={"transaction_no": str}))
+    apply_migrations(cursor)   # tables added after the first version (member cards, bought-together rules, …)
     print(f"Hoàn tất sau {time.time() - started:.0f} giây. Tài khoản demo được Spring Boot tạo khi khởi động.")
     return 0
 

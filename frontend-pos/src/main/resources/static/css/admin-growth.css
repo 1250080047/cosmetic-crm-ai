@@ -1,0 +1,19 @@
+/* Tabs added for store growth: bought together, inventory lots, campaign results, reviews. */
+.growth-explain { margin-top: 4px; border: 1px solid var(--border, #e2e8e0); border-radius: 8px; padding: 10px 14px; background: #fafcf9; font-size: 13px; }
+.growth-explain summary { cursor: pointer; font-weight: 600; color: var(--ink, #1f2a1f); }
+.growth-explain ul { margin: 10px 0 2px; padding-left: 18px; display: grid; gap: 6px; line-height: 1.5; color: #4b5563; }
+.basket-target { color: #6d28d9; font-weight: 600; }
+.growth-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.growth-badge.ok { background: #e7f6ec; color: #1f7a3d; }
+.growth-badge.warn { background: #fff4db; color: #a15c00; }
+.growth-badge.danger { background: #fde8e8; color: #b42318; }
+.growth-badge.muted { background: #eef2f6; color: #526071; }
+.growth-form { display: grid; gap: 12px; }
+.growth-form .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.growth-form label { display: grid; gap: 4px; font-size: 12.5px; color: #4b5563; }
+.growth-form input, .growth-form select, .growth-form textarea { padding: 7px 9px; border: 1px solid var(--border, #d7ddd4); border-radius: 6px; font: inherit; }
+.growth-lines { display: grid; gap: 8px; }
+.growth-line { display: grid; grid-template-columns: minmax(180px, 2fr) repeat(4, minmax(90px, 1fr)) auto; gap: 8px; align-items: end; }
+@media (max-width: 760px) { .growth-line { grid-template-columns: 1fr 1fr; } }
+.growth-note { font-size: 12.5px; color: #64748b; margin: 6px 0 0; }
+.growth-warning { padding: 10px 12px; border-radius: 8px; background: #fff4db; color: #7a4a00; font-size: 13px; margin: 0 0 12px; }

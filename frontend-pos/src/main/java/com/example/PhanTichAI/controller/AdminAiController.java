@@ -77,6 +77,15 @@ public class AdminAiController {
 
     @PostMapping("/chat-strategy") public ResponseEntity<String> chat(@RequestBody String body) { return forward("chat-strategy", HttpMethod.POST, body); }
 
+    /** Products bought together (market basket analysis): the stored rules and how often cashiers used them. */
+    @GetMapping("/associations") public ResponseEntity<String> associations() { return forward("associations?limit=300", HttpMethod.GET, null); }
+
+    @PostMapping("/associations/recompute")
+    public ResponseEntity<String> recomputeAssociations(@AuthenticationPrincipal StoreUser user) throws Exception {
+        String who = user == null ? "" : user.getFullName() + " (" + user.getUsername() + ")";
+        return forward("associations/recompute", HttpMethod.POST, json.writeValueAsString(Map.of("user", who)));
+    }
+
     private void checkK(int k) {
         if (k < 2 || k > 10) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Số nhóm cần từ 2 đến 10.");
     }

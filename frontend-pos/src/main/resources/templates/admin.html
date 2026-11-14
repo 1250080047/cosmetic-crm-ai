@@ -11,12 +11,14 @@
     <link rel="stylesheet" href="/css/admin-workspace.css">
     <link rel="stylesheet" href="/css/shift.css">
     <link rel="stylesheet" href="/css/model.css">
+    <link rel="stylesheet" href="/css/admin-growth.css">
     <script defer src="/js/session.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="/js/admin.js"></script>
     <script defer src="/js/shift-report.js"></script>
     <script defer src="/js/admin-workspace.js"></script>
     <script defer src="/js/model.js"></script>
+    <script defer src="/js/admin-growth.js"></script>
 </head>
 <body>
     <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -37,6 +39,7 @@
         <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
         <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M7 3v6h9V3M7 21v-8h10v8"/></symbol>
         <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+        <symbol id="i-basket" viewBox="0 0 24 24"><path d="M5 9h14l-1.5 10.5A1.5 1.5 0 0 1 16 21H8a1.5 1.5 0 0 1-1.5-1.5L5 9Z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></symbol>
     </svg>
 
     <a class="skip-link" href="#mainContent">Đến nội dung chính</a>
@@ -50,6 +53,7 @@
             <button class="nav-item active" data-tab="overview" aria-current="page"><svg class="icon"><use href="#i-grid"/></svg><span>Tổng quan</span></button>
             <button class="nav-item" data-tab="model"><svg class="icon"><use href="#i-spark"/></svg><span>Mô hình phân cụm</span></button>
             <button class="nav-item" data-tab="strategies"><svg class="icon"><use href="#i-target"/></svg><span>Chiến lược ưu đãi</span></button>
+            <button class="nav-item" data-tab="basket"><svg class="icon"><use href="#i-basket"/></svg><span>Gợi ý mua kèm</span></button>
             <button class="nav-item" data-tab="orders"><svg class="icon"><use href="#i-receipt"/></svg><span>Lịch sử hóa đơn</span></button>
             <button class="nav-item" data-tab="revenue"><svg class="icon"><use href="#i-wallet"/></svg><span>Doanh thu & so sánh</span></button>
             <button class="nav-item" data-tab="products"><svg class="icon"><use href="#i-box"/></svg><span>Sản phẩm & tồn kho</span></button>
@@ -140,6 +144,27 @@
                 </div>
             </section>
 
+            <section id="tab-basket" class="tab-panel" hidden aria-label="Gợi ý mua kèm">
+                <div class="stats-grid" id="basketStats"></div>
+                <section class="card">
+                    <div class="card-heading"><div><h2>Sản phẩm hay được mua cùng nhau</h2><p class="muted" id="basketCaption">Đang đọc kết quả phân tích giỏ hàng…</p></div>
+                        <button class="button button-secondary" id="basketRecompute" type="button"><svg class="icon"><use href="#i-refresh"/></svg>Tính lại</button></div>
+                    <details class="growth-explain">
+                        <summary>Đọc 3 chỉ số thế nào? (sách Essentials of Marketing Analytics, chương 9)</summary>
+                        <ul>
+                            <li><strong>Mua chung</strong>: số hóa đơn có cả A và B. Chỉ giữ cặp mua chung từ <span id="basketMin">30</span> hóa đơn trở lên để tránh trùng hợp ngẫu nhiên.</li>
+                            <li><strong>Độ tin cậy (confidence)</strong> A → B = hóa đơn có cả A và B / hóa đơn có A. VD 65% nghĩa là cứ 100 khách mua A thì 65 khách mua cả B. Thu ngân thấy câu này ở POS.</li>
+                            <li><strong>Lift</strong> = độ tin cậy / tỉ lệ hóa đơn có B. Lift 2 nghĩa là khách mua A mua B nhiều gấp 2 lần khách bình thường. Chỉ giữ lift &gt; 1.</li>
+                            <li><strong>Support</strong> = hóa đơn có cả A và B / tất cả hóa đơn: cặp này phổ biến tới đâu.</li>
+                        </ul>
+                    </details>
+                </section>
+                <section class="card">
+                    <div class="card-heading"><div><h2>Quy tắc “khách mua A thường mua B”</h2><p class="muted">Ở POS, thu ngân thấy tối đa 3 gợi ý có độ tin cậy cao nhất cho các món đang trong giỏ (chỉ sản phẩm còn hàng).</p></div></div>
+                    <div class="orders-toolbar"><label class="search-field"><input id="basketSearch" type="search" placeholder="Tìm sản phẩm…" aria-label="Tìm trong quy tắc mua kèm"></label><span class="result-count" id="basketCount"></span></div>
+                    <div class="table-scroll"><table><thead><tr><th>Khách mua (A)</th><th>Gợi ý thêm (B)</th><th class="numeric">Mua chung</th><th class="numeric">Độ tin cậy</th><th class="numeric">Lift</th><th class="numeric">Support</th></tr></thead><tbody id="basketBody"></tbody></table></div>
+                </section>
+            </section>
             <section id="tab-orders" class="tab-panel" hidden aria-label="Lịch sử hóa đơn">
                 <section class="card orders-card"><div class="card-heading"><div><h2>Hóa đơn cửa hàng</h2><p class="muted">Dữ liệu từ bảng orders, sắp xếp theo thời gian mới nhất.</p></div><button class="button button-secondary" id="exportOrdersButton" disabled><svg class="icon"><use href="#i-download"/></svg>Xuất CSV</button></div><div class="orders-toolbar"><label class="search-field"><svg class="icon"><use href="#i-search"/></svg><input id="orderSearch" type="search" placeholder="Mã hóa đơn, mã/tên khách, hoặc gõ: tiền mặt, chuyển khoản, thẻ…" aria-label="Tìm hóa đơn"></label><label class="payment-filter"><span>Thanh toán</span><select id="paymentFilter" aria-label="Lọc phương thức thanh toán"><option value="">Tất cả phương thức</option><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option><option value="CARD">Thẻ</option><option value="ONLINE">Trực tuyến (đơn lịch sử)</option></select></label><label class="payment-filter">Từ ngày<input type="date" id="orderFrom" aria-label="Hóa đơn từ ngày"></label><label class="payment-filter">Đến ngày<input type="date" id="orderTo" aria-label="Hóa đơn đến ngày"></label><span class="result-count" id="orderResultCount">Chưa tải dữ liệu</span></div><div class="table-scroll"><table><thead><tr><th>Mã hóa đơn</th><th>Thời gian</th><th>Khách hàng</th><th class="numeric">Tạm tính</th><th class="numeric">Giảm giá</th><th class="numeric">Thực thu</th><th>Thanh toán</th></tr></thead><tbody id="ordersTableBody"><tr><td colspan="7" class="table-state">Đang tải hóa đơn…</td></tr></tbody></table></div><div class="card-footer"><span id="ordersPaginationInfo">—</span><div class="pagination"><button class="button button-small button-secondary" id="previousPage" disabled>Trước</button><span id="pageNumber">—</span><button class="button button-small button-secondary" id="nextPage" disabled>Sau</button></div></div></section>
             </section>

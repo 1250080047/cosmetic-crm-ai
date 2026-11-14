@@ -12,6 +12,7 @@ from google.genai import types
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine
 
+import basket_service
 from assistant_service import ChatStrategyRequest, ChatStrategyResponse, answer_request, requested_k
 from clustering_service import ClusterError, ClusterStore, StaleDeployment
 from customer_language import cashier_script as professional_cashier_script, segment_label
@@ -74,8 +75,19 @@ def _refresh_group_names():
         print(f"--> Chưa cập nhật được tên nhóm: {type(error).__name__}: {error}")
 
 
+def _first_basket_rules():
+    """Products bought together: computed once when the database has no rules yet (later from the admin page)."""
+    try:
+        if not basket_service.has_rules(DB_ENGINE):
+            result = basket_service.compute(DB_ENGINE, "Tự tính khi khởi động")
+            print(f"--> Đã tìm {result['run']['rule_count']} quy tắc mua kèm.")
+    except Exception as error:
+        print(f"--> Chưa tính được quy tắc mua kèm: {type(error).__name__}: {error}")
+
+
 _refresh_group_names()
 threading.Thread(target=_daily_rescore, daemon=True, name="daily-rescore").start()
+threading.Thread(target=_first_basket_rules, daemon=True, name="basket-rules").start()
 
 
 # ---- model state --------------------------------------------------------------------------------
@@ -150,6 +162,31 @@ def predict_segment(req: PredictRequest):
     return {"cluster_id": cluster["cluster_id"], "segment_name": segment_label(cluster["name"]),
             "color_code": cluster["color"], "active_version": cluster["active_version"],
             "discount_percent": 0, "gift_description": "", "cashier_script": professional_cashier_script()}
+
+
+# ---- products bought together (market basket analysis) -------------------------------------------
+def _basket(action):
+    try:
+        return action()
+    except Exception as error:
+        print(f"--> Lỗi phân tích giỏ hàng: {type(error).__name__}: {error}")
+        raise HTTPException(503, "Chưa đọc/ghi được dữ liệu mua kèm trong SQL Server. Kết quả cũ được giữ nguyên.") from error
+
+
+@app.get("/api/ai/associations")
+def associations(limit: int = Query(300, ge=1, le=2000)):
+    return _basket(lambda: basket_service.latest(DB_ENGINE, limit))
+
+
+class RecomputeRequest(BaseModel):
+    user: str = Field(default="", max_length=100)
+
+
+@app.post("/api/ai/associations/recompute")
+def recompute_associations(request: RecomputeRequest):
+    if os.getenv("AI_READ_ONLY_PREVIEW") == "1":
+        raise HTTPException(403, "Dịch vụ kiểm tra đang ở chế độ chỉ đọc.")
+    return _basket(lambda: basket_service.compute(DB_ENGINE, request.user))
 
 
 # ---- assistant -----------------------------------------------------------------------------------

@@ -102,17 +102,18 @@ Lưu ý khi đọc: dữ liệu nền kết thúc năm 2021, nên **hôm nay** m
 
 | Thư mục | Nội dung |
 |---|---|
-| `entity/` | 15 lớp ánh xạ 15 bảng SQL (JPA): Customer, Order, OrderItem, Product, Strategy, Category, Role, User, Shift, CustomerSegment, ModelVersion, DriftCheck, StrategyHistory, MemberAccount, LoyaltyPoint |
+| `entity/` | 17 lớp ánh xạ 17 bảng SQL (JPA): Customer, Order, OrderItem, Product, Strategy, Category, Role, User, Shift, CustomerSegment, ModelVersion, DriftCheck, StrategyHistory, MemberAccount, LoyaltyPoint, AssociationRun, ProductAssociation |
 | `repository/` | truy vấn JPA cho các bảng bán hàng dùng nhiều (khách, sản phẩm, hóa đơn, dòng hàng, ưu đãi) |
 | `service/`, `controller/` | nghiệp vụ và API; truy vấn thống kê viết SQL trực tiếp bằng `JdbcTemplate` |
 | `security/`, `dto/` | đăng nhập, phân quyền; dữ liệu trao đổi với trình duyệt và dịch vụ AI |
 
 `CustomerSegment`, `ModelVersion`, `DriftCheck`, `StrategyHistory` đánh dấu `@Immutable`: dịch vụ AI (Python) ghi các bảng
 này khi huấn luyện, kiểm tra lệch và áp dụng mô hình; phía Java chỉ đọc. Test `EntityMappingTest` kiểm tra mỗi bảng trong
-`database/schema.sql` có đúng một entity với đúng các cột.
+`database/schema.sql` và `database/migrations/` có đúng một entity với đúng các cột.
 
-**Database đang dùng từ trước (chưa có bảng thẻ thành viên):** chạy `python database\migrate.py`. Script chỉ thêm bảng
-`member_accounts`, `loyalty_points` và cộng điểm cho hóa đơn đã bán tại quầy; chạy lại nhiều lần vẫn an toàn, không xóa dữ liệu.
+**Cập nhật database đang dùng:** sau khi tải code mới, chạy `python database\migrate.py`. Script áp dụng lần lượt
+`database/migrations/*.sql` (thẻ thành viên & điểm, gợi ý mua kèm, …); mỗi file chỉ thêm bảng/cột mới, chạy lại nhiều lần vẫn
+an toàn, không xóa dữ liệu. Database tạo mới bằng `build_database.py` tự áp dụng đủ các migration.
 
 ## Cài đặt từ đầu
 
@@ -205,6 +206,27 @@ tối đa 200 truy cập cùng lúc, chỉ dùng để thử nghiệm/demo; lapt
 - Trang khách hiện: thẻ, mã QR, điểm, **ưu đãi đang có** (không hiện tên nhóm nội bộ như "ngủ đông"), 10 hóa đơn và 10 lần cộng điểm gần nhất.
   Có thể "Thêm vào màn hình chính" để mở như ứng dụng.
 - Phiên của khách tách hẳn với tài khoản nhân viên: khách không vào được POS hay trang quản trị (test `MemberSecurityTest`).
+
+## Gợi ý mua kèm (phân tích giỏ hàng)
+
+Theo chương 9 (Market Basket Analysis) của sách *Essentials of Marketing Analytics*: đếm trên mọi hóa đơn (dữ liệu nền
+OnlineSales + hóa đơn bán tại quầy; bỏ dòng quà tặng giá 0) xem hai sản phẩm đang bày bán hay được mua chung đến mức nào.
+
+| Chỉ số | Công thức | Ý nghĩa |
+|---|---|---|
+| Mua chung | số hóa đơn có cả A và B | chỉ giữ cặp **≥ 30 hóa đơn** |
+| Support | có cả A và B / tất cả hóa đơn | cặp này phổ biến tới đâu |
+| Confidence A → B | có cả A và B / có A | "65% khách mua A cũng mua B" — câu thu ngân thấy |
+| Lift | confidence / tỉ lệ hóa đơn có B | > 1: mua chung nhiều hơn ngẫu nhiên; chỉ giữ lift > 1 |
+
+Kết quả trên dữ liệu hiện tại: 13.642 hóa đơn → **110 cặp, 220 quy tắc**. VD *Dầu xả Clear Frizz Control → Dầu gội Clear Frizz
+Control*: 60 hóa đơn mua chung, confidence 65%, lift 89,9.
+
+- **Tính:** FastAPI ([basket_service.py](backend-pos/basket_service.py)) tự tính lần đầu khi khởi động; trang quản trị → tab
+  **Gợi ý mua kèm** → **Tính lại** để gộp hóa đơn mới. Bảng `association_runs` (lịch sử lần tính), `product_associations` (quy tắc).
+- **POS:** khi thêm hàng vào giỏ, khung **🛍️ Khách hay mua kèm** hiện tối đa 3 sản phẩm còn hàng có confidence cao nhất, kèm lý do;
+  bấm **+ Thêm** để đưa vào hóa đơn. Dòng hóa đơn thêm từ gợi ý được đánh dấu `order_items.from_suggestion = 1`.
+- **Đo hiệu quả:** tab Gợi ý mua kèm cho biết bao nhiêu hóa đơn tại quầy có món từ gợi ý, số lượng và doanh thu từ gợi ý.
 
 ## Kiểm thử
 

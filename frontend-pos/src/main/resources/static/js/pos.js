@@ -147,7 +147,7 @@
     }
 
     // ---- Cart ----------------------------------------------------------------------------------
-    function addToCart(product, mode = 'auto') {
+    function addToCart(product, mode = 'auto', suggested = false) {
         if (state.busy) return;
         const gift = mode === 'gift' || (mode === 'auto' && eligibleGift(product.id));
         if (gift && (!eligibleGift(product.id) || remainingGift() <= 0)) {
@@ -155,9 +155,50 @@
         }
         if (product.stockQuantity <= inCart(product.id)) { alert('Số lượng đã chọn đạt tồn kho của sản phẩm.'); return; }
         const key = lineKey(product.id, gift), existing = state.cart.find((item) => item.key === key);
-        if (existing) existing.qty++;
-        else state.cart.push({ key, id: product.id, name: product.productName, price: gift ? 0 : Number(product.unitPrice), retailPrice: Number(product.unitPrice), gift, qty: 1 });
+        if (existing) { existing.qty++; existing.suggested = existing.suggested || (suggested && !gift); }
+        else state.cart.push({ key, id: product.id, name: product.productName, price: gift ? 0 : Number(product.unitPrice), retailPrice: Number(product.unitPrice), gift, qty: 1, suggested: suggested && !gift });
         renderCart(); renderOffer(); renderProductGrid();
+    }
+
+    // ---- Bought together (market basket analysis) ----------------------------------------------
+    let suggestionKey = '', suggestionTimer = null, suggestionRequest = 0;
+    function scheduleSuggestions() {
+        const ids = [...new Set(state.cart.filter((item) => !item.gift).map((item) => item.id))].sort((a, b) => a - b);
+        const key = ids.join(',');
+        if (key === suggestionKey) return;
+        suggestionKey = key;
+        clearTimeout(suggestionTimer);
+        if (!ids.length) { $('suggestBox').hidden = true; return; }
+        suggestionTimer = setTimeout(() => loadSuggestions(ids), 250);
+    }
+    async function loadSuggestions(ids) {
+        const mine = ++suggestionRequest;
+        try {
+            const suggestions = await request('/api/pos/suggestions?ids=' + ids.join(','));
+            if (mine !== suggestionRequest) return;
+            renderSuggestions(Array.isArray(suggestions) ? suggestions : []);
+        } catch { if (mine === suggestionRequest) $('suggestBox').hidden = true; }
+    }
+    function renderSuggestions(suggestions) {
+        const list = $('suggestList');
+        list.replaceChildren();
+        const shown = suggestions.filter((item) => !inCart(item.product_id) && state.products.some((p) => p.id === item.product_id));
+        $('suggestBox').hidden = !shown.length;
+        shown.forEach((item) => {
+            const product = state.products.find((p) => p.id === item.product_id);
+            const row = node('div', 'suggest-item');
+            const info = node('div', 'suggest-info');
+            info.append(node('strong', 'suggest-name', item.product_name), node('span', 'suggest-price', money(item.unit_price)),
+                node('span', 'suggest-reason', Math.round(item.confidence * 100) + '% khách mua “' + item.because_name + '” cũng mua món này (' +
+                    Number(item.together).toLocaleString('vi-VN') + ' hóa đơn)'));
+            const add = node('button', 'suggest-add', '+ Thêm');
+            add.type = 'button';
+            add.disabled = state.busy || product.stockQuantity <= inCart(product.id);
+            add.title = 'Thêm vào hóa đơn (ghi nhận là món từ gợi ý)';
+            add.addEventListener('click', () => addToCart(product, 'sale', true));
+            row.append(info, add);
+            list.append(row);
+        });
     }
     function changeQty(key, delta) {
         if (state.busy) return;
@@ -212,6 +253,7 @@
         button.disabled = state.busy || state.lookingUp || !state.cart.length || noShift;
         button.textContent = state.busy ? 'Đang lưu hóa đơn…' : (noShift ? 'Mở ca để thanh toán' : '⚡ THANH TOÁN & TRỪ KHO');
         $('shiftWarning').hidden = !noShift;
+        scheduleSuggestions();
     }
     function clearCart() {
         if (state.busy) return;
@@ -377,7 +419,8 @@
             customerId: state.customer?.customer_id ?? null,
             totalAmount: amounts.subtotal, discountAmount: amounts.percentDiscount,
             finalAmount: amounts.finalAmount, paymentMethod: $('paymentMethod').value,
-            items: state.cart.map((item) => ({ productId: item.id, quantity: item.qty, unitPrice: item.price, gift: item.gift }))
+            items: state.cart.map((item) => ({ productId: item.id, quantity: item.qty, unitPrice: item.price, gift: item.gift,
+                fromSuggestion: Boolean(item.suggested) }))
         };
         state.busy = true; renderCart(); renderOffer(); renderProductGrid();
         try {

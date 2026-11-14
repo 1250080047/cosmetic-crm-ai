@@ -16,8 +16,12 @@ public class CheckoutRequest {
         private Integer quantity;
         private BigDecimal unitPrice;
         private boolean gift;
+        private boolean fromSuggestion;
 
         public ItemDto() {}
+
+        public boolean isFromSuggestion() { return fromSuggestion; }
+        public void setFromSuggestion(boolean fromSuggestion) { this.fromSuggestion = fromSuggestion; }
 
         public Integer getProductId() { return productId; }
         public void setProductId(Integer productId) { this.productId = productId; }

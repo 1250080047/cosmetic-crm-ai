@@ -44,7 +44,7 @@ public class PosCheckoutService {
         this.offers = offers;
     }
 
-    private record Line(Product product, int quantity, BigDecimal unitPrice, boolean gift) {}
+    private record Line(Product product, int quantity, BigDecimal unitPrice, boolean gift, boolean suggested) {}
 
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> checkout(CheckoutRequest request) {
@@ -98,7 +98,7 @@ public class PosCheckoutService {
         for (CheckoutRequest.ItemDto item : request.getItems()) {
             Product product = locked.get(item.getProductId());
             BigDecimal price = item.isGift() ? BigDecimal.ZERO.setScale(2) : product.getUnitPrice();
-            lines.add(new Line(product, item.getQuantity(), price, item.isGift()));
+            lines.add(new Line(product, item.getQuantity(), price, item.isGift(), item.isFromSuggestion() && !item.isGift()));
             subtotal = subtotal.add(price.multiply(BigDecimal.valueOf(item.getQuantity())));
         }
         subtotal = subtotal.setScale(2, RoundingMode.HALF_UP);
@@ -140,6 +140,7 @@ public class PosCheckoutService {
             item.setUnitPrice(line.unitPrice());
             item.setListPrice(line.product().getUnitPrice());
             item.setRevenue(line.unitPrice().multiply(BigDecimal.valueOf(line.quantity())));
+            item.setFromSuggestion(line.suggested());
             orderItems.save(item);
             receiptLines.add(Map.of("product_id", line.product().getId(), "product_name", line.product().getProductName(),
                     "quantity", line.quantity(), "unit_price", line.unitPrice(), "gift", line.gift(), "line_total", item.getRevenue()));
