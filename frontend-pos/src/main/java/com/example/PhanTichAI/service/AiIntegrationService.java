@@ -1,6 +1,8 @@
 package com.example.PhanTichAI.service;
 
 import com.example.PhanTichAI.dto.AiPredictResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -9,6 +11,7 @@ import java.util.Map;
 
 @Service
 public class AiIntegrationService {
+    private static final Logger log = LoggerFactory.getLogger(AiIntegrationService.class);
     private final RestTemplate restTemplate;
     private final String predictUrl;
 
@@ -39,7 +42,7 @@ public class AiIntegrationService {
             body.put("rating", rating);
             return restTemplate.postForObject(sentimentUrl, body, Map.class);
         } catch (Exception error) {
-            System.err.println("Chưa phân tích được cảm xúc đánh giá: " + error.getClass().getSimpleName());
+            log.warn("Chưa phân tích được cảm xúc đánh giá: {}", error.getClass().getSimpleName());
             return null;
         }
     }
@@ -52,7 +55,7 @@ public class AiIntegrationService {
                             "has_purchase", hasPurchase), AiPredictResponse.class);
             if (response != null) return response;
         } catch (Exception error) {
-            System.err.println("Chưa kết nối được dịch vụ phân tích AI: " + error.getClass().getSimpleName());
+            log.warn("Chưa kết nối được dịch vụ phân tích AI: {}", error.getClass().getSimpleName());
         }
         AiPredictResponse unavailable = new AiPredictResponse();
         unavailable.setCluster_id(-100);

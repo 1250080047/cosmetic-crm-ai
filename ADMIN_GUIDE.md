@@ -34,7 +34,7 @@ Tài khoản tạo thêm trên giao diện vẫn cần mật khẩu từ 10 ký 
 ## Chức năng admin bổ sung
 
 - **Doanh thu & so sánh:** chọn tháng/năm; so kỳ trước hoặc cùng kỳ năm trước; biểu đồ 12 tháng; bảng số liệu; doanh thu, số đơn, giá trị đơn, giảm giá; phương thức thanh toán; nhóm hàng; sản phẩm; xuất CSV; yếu tố đóng góp và hướng kiểm tra chiến lược.
-- **Sản phẩm & tồn kho:** tìm tên/mã vạch; lọc hết hàng/tồn thấp/ngừng bán; sửa tên, mã vạch, danh mục, giá bán, giá vốn hiện tại; bật/tắt bán; thêm danh mục. Ngưỡng tồn thấp là 10. Tồn kho chỉ đọc tại đây vì schema hiện chưa có sổ nhập/xuất hoặc lịch sử điều chỉnh để quản lý thay đổi tồn có chứng từ.
+- **Sản phẩm & tồn kho:** tìm tên/mã vạch; lọc hết hàng/tồn thấp/ngừng bán; sửa tên, mã vạch, danh mục, giá bán, giá vốn hiện tại; bật/tắt bán; thêm danh mục. Ngưỡng tồn thấp là 10. Tồn kho chỉ đọc tại đây: mọi thay đổi tồn đi qua phiếu nhập hoặc xuất hủy theo lô ở tab **Kho & hạn dùng** để luôn có chứng từ (tồn của sản phẩm = tổng số còn lại của các lô).
 - **Khách hàng:** tìm theo mã khách (KH…), tên, điện thoại; lọc nhóm; phân trang tại SQL; số đơn và doanh thu tính từ hóa đơn; ngày mua đầu, lần mua cuối. Khách chưa mua lần nào hiển thị “Chưa mua hàng”.
 - **Hóa đơn:** lọc ngày và phương thức (Tiền mặt, Chuyển khoản, Thẻ, Trực tuyến — đơn lịch sử của bộ dữ liệu) ngay tại SQL; ô tìm kiếm nhận mã hóa đơn, mã/tên/SĐT khách, hoặc gõ thẳng “tiền mặt”, “chuyển khoản”, “thẻ”, “trực tuyến” để lọc theo phương thức; xuất CSV phía máy chủ; bấm mã để xem dòng hàng, quà tặng giá 0, thu ngân và ca.
 - **Ca làm việc:** danh sách ca theo ngày và nhân viên; xem báo cáo ca, xuất doanh thu và quà tặng (CSV), in; quản lý có thể kết ca thay nhân viên quên kết ca.
@@ -134,7 +134,7 @@ không có trong dữ liệu gốc nên được gán tự động bằng 55–7
 - Phân rã doanh thu dùng `Δdoanh thu = Δsố đơn × giá trị đơn kỳ gốc + phần thay đổi giá trị đơn`. Hai phần khớp với chênh lệch doanh thu; chưa chứng minh nguyên nhân của việc số đơn/giá trị đơn thay đổi.
 - Doanh thu nhóm hàng được phân bổ từ tiền cuối hóa đơn theo tỷ trọng `order_items.revenue` của từng dòng. Đây là phép phân bổ sau giảm giá, không phải số tiền giảm chính xác cho từng SKU. Tiền chưa phân bổ được đưa vào dòng riêng để khớp tổng; báo cáo cảnh báo hóa đơn thiếu hoặc lệch chi tiết.
 - Danh mục dùng thông tin sản phẩm hiện tại; schema chưa lưu danh mục tại thời điểm bán. Top sản phẩm dùng doanh số dòng hàng **trước giảm giá**, có cột số lượng giá 0 riêng.
-- Không tính lợi nhuận vì `cost_price` hiện tại không phải giá vốn lịch sử của dòng bán. Schema cũng chưa mô tả hoàn tiền, hủy, công nợ, nguồn khách, chi phí marketing hay giờ mở cửa.
+- Lợi nhuận gộp chỉ tính cho hóa đơn bán tại quầy: doanh thu thực thu trừ giá vốn của đúng lô đã bán (giá nhập lô qua `order_items` → `order_item_lots` → `stock_lots`; hóa đơn trước khi có lô dùng giá gốc sản phẩm). Hóa đơn lịch sử OnlineSales không có giá vốn nên không tính. Schema chưa mô tả hoàn tiền, hủy, công nợ, nguồn khách, chi phí marketing hay giờ mở cửa.
 - Khách vãng lai được tính vào hóa đơn/doanh thu; không suy ra số người từ số đơn vãng lai. Tổng RFM có thể lớn hơn lịch sử hóa đơn được nhập vào hệ thống.
 - Gợi ý dựa trên số đơn, giá trị đơn, tỷ lệ giảm và nhóm hàng biến động. Cần đối chiếu thực tế và thử nghiệm có đo lường. Tồn hiện tại không thể chứng minh thiếu hàng trong một kỳ đã qua.
 

@@ -189,7 +189,8 @@ Tệp gốc: `data/raw/OnlineSales.xlsx` — {report['raw_rows']:,} dòng, {repo
 {report['raw_customers']:,} mã khách. Cột: TransactionNo, CustomerID, Quantity, UnitPrice (USD), Revenue,
 TransactionDate, Product Description. Bộ dữ liệu không có danh mục, họ tên hay số điện thoại.
 
-> Nguồn gốc: cần ghi rõ nơi tải bộ dữ liệu OnlineSales trong báo cáo đồ án (tên trang, tác giả, ngày tải, giấy phép).
+> Nguồn: bộ dữ liệu thực hành đi kèm sách *Essentials of Marketing Analytics* — Joseph F. Hair Jr., Dana E. Harrison,
+> Haya Ajjan, McGraw Hill (2021, ISBN 9781260597745). Sách thuộc bản quyền của nhà xuất bản; chỉ dùng cho mục đích học tập.
 
 ## Các bước làm sạch
 | Bước | Số dòng |

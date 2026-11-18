@@ -348,6 +348,5 @@ data/          OnlineSales.xlsx (raw), quy tắc nhóm hàng, tên tiếng Việ
 database/      schema.sql (model_versions, drift_checks, …) và build_database.py (tạo cosmetic_crm_db)
 backend-pos/   FastAPI: clustering_service.py (mô hình nền LRFM), assistant_service.py, main.py, tests/
 frontend-pos/  Spring Boot: POS, quản trị, tab Mô hình phân cụm (model.js), ca làm việc, doanh thu
+docs/          Hướng dẫn cài đặt và hướng dẫn sử dụng (kèm ảnh giao diện)
 ```
-
-Project trước (Open e-commerce 1.0) giữ nguyên tại `D:\CODING\cosmetic-pos-ai` với database `cosmetic_pos_ai`.

@@ -1,5 +1,7 @@
 package com.example.PhanTichAI.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,6 +19,7 @@ import java.util.List;
 @Component
 @ConditionalOnProperty(name = "app.demo-accounts.enabled", havingValue = "true")
 public class DemoAccountSeeder implements ApplicationRunner {
+    private static final Logger log = LoggerFactory.getLogger(DemoAccountSeeder.class);
     private record Demo(String username, String fullName, String role) {}
     private static final String DEMO_PASSWORD = "123456";
     private static final List<Demo> ACCOUNTS = List.of(
@@ -41,6 +44,6 @@ public class DemoAccountSeeder implements ApplicationRunner {
                     demo.username(), encoder.encode(DEMO_PASSWORD), demo.fullName(), roles.get(0));
             created++;
         }
-        if (created > 0) System.out.println("--> Đã tạo " + created + " tài khoản demo (mật khẩu 123456).");
+        if (created > 0) log.info("Đã tạo {} tài khoản demo (mật khẩu 123456).", created);
     }
 }

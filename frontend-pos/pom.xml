@@ -37,7 +37,7 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- 2. Giao diện Server-side rendering (nếu làm UI cây POS bằng HTML/JS) -->
+        <!-- 2. Giao diện render phía máy chủ (trang quản trị, quầy POS, thẻ thành viên) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
@@ -56,26 +56,13 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- 5. Gọi API sang Python AI (WebClient) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-
-        <!-- 6. Lombok (rút gọn code Getter/Setter) -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <!-- 7. Validation dữ liệu đầu vào (kiểm tra SĐT, số lượng > 0) -->
+        <!-- 5. Validation dữ liệu đầu vào (kiểm tra SĐT, số lượng > 0) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- 8. Test -->
+        <!-- 6. Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -88,14 +75,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
             </plugin>
         </plugins>
     </build>

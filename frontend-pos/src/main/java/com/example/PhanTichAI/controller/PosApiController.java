@@ -15,6 +15,8 @@ import com.example.PhanTichAI.service.MemberService;
 import com.example.PhanTichAI.service.PosCheckoutService;
 import com.example.PhanTichAI.service.ShiftService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,6 +34,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/pos")
 public class PosApiController {
+    private static final Logger log = LoggerFactory.getLogger(PosApiController.class);
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
     private final CustomerOfferService customerOfferService;
@@ -239,7 +242,7 @@ public class PosApiController {
         } catch (IllegalArgumentException error) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", error.getMessage()));
         } catch (Exception error) {
-            System.err.println("Checkout failed: " + error.getClass().getSimpleName());
+            log.warn("Checkout failed: {}", error.getClass().getSimpleName());
             return ResponseEntity.internalServerError().body(Map.of(
                     "success", false, "message", "Chưa hoàn tất thanh toán. Vui lòng kiểm tra kết nối và thử lại."));
         }
