@@ -1,0 +1,98 @@
+<mxfile host="app.diagrams.net" pages="2">
+  <diagram id="uc_thanh_toan" name="UC Thanh toan">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="1500" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="system" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontFamily=Times New Roman;fontSize=17;spacingTop=10;" value="&lt;b&gt;HỆ THỐNG PHÂN TÍCH VÀ PHÂN CỤM KHÁCH HÀNG&lt;/b&gt;" vertex="1">
+          <mxGeometry height="640" width="1080" x="210" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" edge="1" parent="1" source="thungan" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;" target="main" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" edge="1" parent="1" source="ai" style="endArrow=none;html=1;rounded=0;strokeColor=#000000;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;" target="dudoan" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r1" edge="1" parent="1" source="main" style="endArrow=open;endSize=10;dashed=1;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="tracuu" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" x="0.35" as="geometry" />
+        </mxCell>
+        <mxCell id="r2" edge="1" parent="1" source="main" style="endArrow=open;endSize=10;dashed=1;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="themsp" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" x="0.35" as="geometry" />
+        </mxCell>
+        <mxCell id="r3" edge="1" parent="1" source="main" style="endArrow=open;endSize=10;dashed=1;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="pttt" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" x="0.35" as="geometry" />
+        </mxCell>
+        <mxCell id="r4" edge="1" parent="1" source="main" style="endArrow=open;endSize=10;dashed=1;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="luuhd" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" x="0.35" as="geometry" />
+        </mxCell>
+        <mxCell id="r5" edge="1" parent="1" source="main" style="endArrow=open;endSize=10;dashed=1;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="inhd" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" x="0.35" as="geometry" />
+        </mxCell>
+        <mxCell id="r6" edge="1" parent="1" source="tracuu" style="endArrow=open;endSize=10;dashed=1;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="dudoan" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r7" edge="1" parent="1" source="tracuu" style="endArrow=open;endSize=10;dashed=1;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="hienthi" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r8" edge="1" parent="1" source="luuhd" style="endArrow=open;endSize=10;dashed=1;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="trukho" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r9" edge="1" parent="1" source="luuhd" style="endArrow=open;endSize=10;dashed=1;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="congdiem" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r10" edge="1" parent="1" source="qua" style="endArrow=open;endSize=10;dashed=1;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="main" value="&amp;lt;&amp;lt;extend&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="52" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="main" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=16;fontStyle=1;spacingLeft=14;spacingRight=14;" value="Thanh toán tại quầy có áp dụng ưu đãi theo nhóm khách" vertex="1">
+          <mxGeometry height="100" width="250" x="250" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="tracuu" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;spacingLeft=14;spacingRight=14;" value="Tra cứu khách (SĐT, mã khách, quét QR thẻ)" vertex="1">
+          <mxGeometry height="62" width="230" x="660" y="139" as="geometry" />
+        </mxCell>
+        <mxCell id="themsp" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;spacingLeft=14;spacingRight=14;" value="Thêm sản phẩm vào hóa đơn" vertex="1">
+          <mxGeometry height="62" width="230" x="660" y="239" as="geometry" />
+        </mxCell>
+        <mxCell id="pttt" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;spacingLeft=14;spacingRight=14;" value="Chọn phương thức thanh toán" vertex="1">
+          <mxGeometry height="62" width="230" x="660" y="339" as="geometry" />
+        </mxCell>
+        <mxCell id="luuhd" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;spacingLeft=14;spacingRight=14;" value="Tính lại tổng tiền, lưu hóa đơn" vertex="1">
+          <mxGeometry height="62" width="230" x="660" y="439" as="geometry" />
+        </mxCell>
+        <mxCell id="inhd" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;spacingLeft=14;spacingRight=14;" value="In hóa đơn" vertex="1">
+          <mxGeometry height="62" width="230" x="660" y="539" as="geometry" />
+        </mxCell>
+        <mxCell id="dudoan" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;spacingLeft=14;spacingRight=14;" value="Tính LRFM, dự đoán nhóm khách" vertex="1">
+          <mxGeometry height="62" width="240" x="1010" y="89" as="geometry" />
+        </mxCell>
+        <mxCell id="hienthi" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;spacingLeft=14;spacingRight=14;" value="Hiển thị nhóm, ưu đãi, quà, điểm" vertex="1">
+          <mxGeometry height="62" width="240" x="1010" y="189" as="geometry" />
+        </mxCell>
+        <mxCell id="trukho" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;spacingLeft=14;spacingRight=14;" value="Trừ kho theo lô" vertex="1">
+          <mxGeometry height="62" width="240" x="1010" y="389" as="geometry" />
+        </mxCell>
+        <mxCell id="congdiem" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;spacingLeft=14;spacingRight=14;" value="Cộng điểm, cập nhật nhóm khách" vertex="1">
+          <mxGeometry height="62" width="240" x="1010" y="489" as="geometry" />
+        </mxCell>
+        <mxCell id="qua" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;spacingLeft=14;spacingRight=14;" value="Chọn quà tặng" vertex="1">
+          <mxGeometry height="62" width="230" x="260" y="539" as="geometry" />
+        </mxCell>
+        <mxCell id="thungan" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=16;" value="Thu ngân&lt;div&gt;&lt;i&gt;(CASHIER)&lt;/i&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="68" width="34" x="93" y="349" as="geometry" />
+        </mxCell>
+        <mxCell id="ai" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=16;" value="Dịch vụ AI&lt;div&gt;&lt;i&gt;(FAST API)&lt;/i&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="68" width="34" x="1373" y="98" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="XJ6Pylzo9lry6erG0rs9" name="Trang-2">
+    <mxGraphModel dx="1414" dy="778" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

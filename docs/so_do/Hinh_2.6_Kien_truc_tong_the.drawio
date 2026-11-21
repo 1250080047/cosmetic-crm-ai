@@ -1,0 +1,110 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="kientruc" name="KIEN TRUC">
+    <mxGraphModel dx="982" dy="540" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1290" pageHeight="920" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="g_user" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;dashed=1;dashPattern=6 4;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;fontStyle=1;verticalAlign=top;spacingTop=4;" value="Tầng người dùng" vertex="1">
+          <mxGeometry height="112" width="740" x="200" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="g_web" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;dashed=1;dashPattern=6 4;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;fontStyle=1;verticalAlign=top;spacingTop=4;align=left;spacingLeft=10;" value="Spring boot" vertex="1">
+          <mxGeometry height="450" width="600" x="40" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="g_ai" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;dashed=1;dashPattern=6 4;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;fontStyle=1;verticalAlign=top;spacingTop=4;" value="Dịch vụ AI FastAPI · Python 3.11 · cổng 8000" vertex="1">
+          <mxGeometry height="140" width="480" x="780" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="browser" style="endArrow=block;endFill=1;endSize=8;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;exitX=0.5000;exitY=1;exitDx=0;exitDy=0;entryX=0.1000;entryY=0;entryDx=0;entryDy=0;" target="security" value="HTTP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="pos" style="endArrow=block;endFill=1;endSize=8;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;exitX=0.5000;exitY=1;exitDx=0;exitDy=0;entryX=0.9000;entryY=0;entryDx=0;entryDy=0;" target="security" value="HTTP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="phone" style="endArrow=block;endFill=1;endSize=8;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;exitX=0.5000;exitY=1;exitDx=0;exitDy=0;entryX=0.5000;entryY=0;entryDx=0;entryDy=0;" target="tunnel" value="HTTPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="tunnel" style="endArrow=block;endFill=1;endSize=8;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;exitX=0.5000;exitY=1;exitDx=0;exitDy=0;entryX=1.0000;entryY=0.5;entryDx=0;entryDy=0;" target="security" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="810" y="358" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="security" style="endArrow=block;endFill=1;endSize=8;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;exitX=0.5000;exitY=1;exitDx=0;exitDy=0;entryX=0.5000;entryY=0;entryDx=0;entryDy=0;" target="controller" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="controller" style="endArrow=block;endFill=1;endSize=8;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;exitX=0.5000;exitY=1;exitDx=0;exitDy=0;entryX=0.5000;entryY=0;entryDx=0;entryDy=0;" target="service" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="service" style="endArrow=block;endFill=1;endSize=8;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;exitX=0.0000;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5000;entryY=0;entryDx=0;entryDy=0;" target="repo" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="170" y="556" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="service" style="endArrow=block;endFill=1;endSize=8;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;exitX=1.0000;exitY=0.5;exitDx=0;exitDy=0;entryX=0.0000;entryY=0.5428571428571428;entryDx=0;entryDy=0;" target="g_ai" value="REST/JSON +&lt;br&gt;X-Internal-Key">
+          <mxGeometry relative="1" x="0.25" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="repo" style="endArrow=block;endFill=1;endSize=8;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;exitX=0.5000;exitY=1;exitDx=0;exitDy=0;entryX=0.0000;entryY=0.5;entryDx=0;entryDy=0;" target="db" value="JDBC mssql-jdbc">
+          <mxGeometry relative="1" x="-0.58" as="geometry">
+            <Array as="points">
+              <mxPoint x="170" y="850" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="g_ai" style="endArrow=block;endFill=1;endSize=8;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;exitX=0.2500;exitY=1;exitDx=0;exitDy=0;entryX=1.0000;entryY=0.5;entryDx=0;entryDy=0;" target="db" value="SQLAlchemy + pyodbc">
+          <mxGeometry relative="1" x="-0.4" as="geometry">
+            <Array as="points">
+              <mxPoint x="900" y="850" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="g_ai" style="endArrow=block;endFill=1;endSize=8;html=1;rounded=0;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;labelBackgroundColor=#FFFFFF;exitX=0.7708;exitY=1;exitDx=0;exitDy=0;entryX=0.5000;entryY=0;entryDx=0;entryDy=0;" target="gemini" value="HTTPS, số liệu tổng hợp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="browser" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;" value="Trình duyệt quản trị&lt;br&gt;Quản trị viên, Quản lý" vertex="1">
+          <mxGeometry height="56" width="220" x="220" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="pos" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;" value="Màn hình quầy POS&lt;br&gt;Thu ngân" vertex="1">
+          <mxGeometry height="56" width="220" x="460" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="phone" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;" value="Điện thoại khách hàng&lt;br&gt;Trang thẻ thành viên" vertex="1">
+          <mxGeometry height="56" width="220" x="700" y="58" as="geometry" />
+        </mxCell>
+        <mxCell id="tunnel" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;" value="Cloudflare Tunnel&lt;br&gt;cổng 8081 – chỉ mở /member" vertex="1">
+          <mxGeometry height="56" width="220" x="700" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="security" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;" value="Spring Security&lt;br&gt;đăng nhập, phân quyền, CSRF, phiên" vertex="1">
+          <mxGeometry height="56" width="300" x="300" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="controller" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;" value="Controller&lt;br&gt;Thymeleaf + REST API" vertex="1">
+          <mxGeometry height="56" width="300" x="300" y="426" as="geometry" />
+        </mxCell>
+        <mxCell id="service" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;" value="Service&lt;br&gt;POS, ưu đãi, kho, ca, doanh thu" vertex="1">
+          <mxGeometry height="68" width="300" x="300" y="522" as="geometry" />
+        </mxCell>
+        <mxCell id="repo" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;" value="Repository JPA&lt;br&gt;JdbcTemplate" vertex="1">
+          <mxGeometry height="56" width="200" x="70" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="ai0" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;" value="Phân cụm LRFM&lt;br&gt;K-Means" vertex="1">
+          <mxGeometry height="64" width="106" x="792" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="ai1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;" value="Phân tích&lt;br&gt;giỏ hàng" vertex="1">
+          <mxGeometry height="64" width="106" x="910" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="ai2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;" value="Phân tích&lt;br&gt;cảm xúc" vertex="1">
+          <mxGeometry height="64" width="106" x="1028" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="ai3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=14;" value="Trợ lý đề xuất&lt;br&gt;chiến lược" vertex="1">
+          <mxGeometry height="64" width="106" x="1146" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="db" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=14;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;" value="Microsoft SQL Server&amp;nbsp;&lt;div&gt;&lt;br/&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="100" width="300" x="430" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="gemini" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontFamily=Times New Roman;fontSize=15;" value="Google Gemini API" vertex="1">
+          <mxGeometry height="56" width="200" x="1050" y="820" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
